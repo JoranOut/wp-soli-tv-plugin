@@ -1,0 +1,91 @@
+.soli-tv-block-slide-selector {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 25px;
+  padding-top: 30px;
+
+  .slide-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    .soli-tv-block-slide-selector-item {
+      display: grid;
+      grid-template-columns: min-content 1fr min-content;
+      grid-template-areas:
+              "visibility type edit"
+               "visibility title edit"
+              "visibility dates edit";
+      padding-left: 10px;
+      padding-right: 10px;
+      border-radius: 5px;
+      column-gap: 5px;
+      border: 2px solid #aaaaaa;
+      cursor: pointer;
+
+      &.add-new-slide {
+        grid-template-columns: 1fr;
+        grid-template-areas: "edit";
+        justify-items: center;
+      }
+
+      &.current {
+        border-color: #0073aa;
+        background-color: #f0f8ff;
+      }
+
+      &:hover {
+        background-color: #e6f0f8;
+      }
+
+      &.disabled {
+        opacity: 0.6;
+        background: #e3e3e3;
+      }
+
+      .visibility-button {
+        width: 20px;
+        cursor: pointer;
+        grid-row: 1 / span 3;
+        align-self: center;
+        grid-area: visibility;
+      }
+
+      .message-editor-modal {
+        cursor: pointer;
+        grid-row: 1 / span 3;
+        align-self: center;
+        grid-area: edit;
+      }
+
+      .edit-button {
+        width: 20px;
+        cursor: pointer;
+        grid-row: 1 / span 3;
+        align-self: center;
+        grid-area: edit;
+      }
+
+      .slide-type {
+        font-size: 13px;
+        color: #888;
+        margin: 0;
+        grid-area: type;
+      }
+
+      .slide-title {
+        font-size: 15px;
+        color: #000;
+        margin: 0;
+        grid-area: title;
+      }
+
+      .slide-dates {
+        font-size: 15px;
+        color: #666;
+        margin: 0;
+        grid-area: dates;
+      }
+    }
+  }
+}

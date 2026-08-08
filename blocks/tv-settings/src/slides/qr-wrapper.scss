@@ -1,0 +1,122 @@
+/* ------------------------------------------------------
+QR Wrapper Animations (SCSS-only)
+Requirements:
+- initial width/height from 0 to 100 (configurable via $qr-size)
+- periodically rotate 90deg (pulses)
+- while rotating, slightly decrease the size
+- on exit, shrink width/height back to 0
+---------------------------------------------------------*/
+
+// SCSS variables
+$qr-size: 100% !default; // adjust as needed
+$qr-pop-duration: 320ms !default;
+$qr-pulse-duration: 10000ms !default; // one full cycle (4x 90deg)
+$qr-pulse-scale: 0.75 !default; // slight dip while rotating
+$qr-ease-pop: cubic-bezier(.2, .8, .2, 1) !default;
+
+
+.qr-wrapper img {
+  width: 0;
+  height: 0;
+  display: grid;
+  place-items: center;
+  transform-origin: center center;
+  overflow: hidden;
+
+
+  // Ensure children fit the square
+  > * {
+    width: 100%;
+    height: 100%;
+  }
+
+}
+
+// Activate: pop in, then keep rotating with pulses
+.is-active .qr-wrapper img {
+  animation: qr-pop-in $qr-pop-duration $qr-ease-pop forwards,
+  qr-rotate-pulse $qr-pulse-duration linear $qr-pop-duration infinite;
+}
+
+// Exit: cancel any running animation and shrink back to 0
+.is-inactive .qr-wrapper img {
+  animation: qr-pop-out 260ms ease-in forwards;
+}
+
+
+// Pop in: only animate width/height + opacity to avoid transform conflicts
+@keyframes qr-pop-in {
+  from {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    width: $qr-size;
+    height: $qr-size;
+    opacity: 1;
+  }
+}
+
+
+// Pop out: reverse of pop-in
+@keyframes qr-pop-out {
+  from {
+    width: $qr-size;
+    height: $qr-size;
+    opacity: 1;
+  }
+  to {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+}
+
+
+// Rotate in 90° pulses and briefly squish size during each pulse.
+// Single keyframes controls both rotation and scale to avoid transform conflicts.
+@keyframes qr-rotate-pulse {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  23% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(0deg) scale($qr-pulse-scale);
+  }
+  27% {
+    transform: rotate(90deg) scale(1);
+  }
+
+
+  48% {
+    transform: rotate(90deg) scale(1);
+  }
+  50% {
+    transform: rotate(90deg) scale($qr-pulse-scale);
+  }
+  52% {
+    transform: rotate(180deg) scale(1);
+  }
+
+
+  73% {
+    transform: rotate(180deg) scale(1);
+  }
+  75% {
+    transform: rotate(180deg) scale($qr-pulse-scale);
+  }
+  77% {
+    transform: rotate(270deg) scale(1);
+  }
+
+
+  98% {
+    transform: rotate(270deg) scale(1);
+  }
+  100% {
+    transform: rotate(270deg) scale($qr-pulse-scale);
+  }
+}
