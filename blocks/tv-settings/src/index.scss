@@ -1,0 +1,12 @@
+.soli-tv {
+  background: #efefef;
+  border-radius: 15px;
+  padding: 15px 20px;
+
+  .group-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    margin-bottom: 30px;
+  }
+}
+

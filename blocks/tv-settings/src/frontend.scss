@@ -1,0 +1,23 @@
+.soli-groups {
+  display: flex;
+  gap: 15px;
+  margin-top: -50px;
+
+  .group {
+    display: flex;
+    align-items: center;
+    padding: 5px 0px;
+    /* border: 1px solid red; */
+    color: red;
+
+    img {
+      height: 15px;
+      filter: invert(25%) sepia(88%) saturate(7182%) hue-rotate(357deg) brightness(108%) contrast(122%);
+    }
+
+    p {
+      margin: 0;
+      text-decoration: underline;
+    }
+  }
+}
