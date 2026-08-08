@@ -8,13 +8,39 @@ class SoliTVSettingsBlock {
     add_action('init', array($this, 'adminAssets'));
   }
 
+  /**
+   * Reads the dependency list webpack generated for a bundle.
+   *
+   * Keeps the registered dependencies in step with what the source actually
+   * imports, instead of a hand-maintained list that drifts. Falls back to the
+   * minimum needed to boot when the bundle has not been built yet.
+   */
+  private function assetFor($handle, $fallback) {
+    $asset_path = plugin_dir_path(__FILE__) . 'build/' . $handle . '.asset.php';
+
+    if (file_exists($asset_path)) {
+      $asset = include $asset_path;
+      if (is_array($asset) && !empty($asset['dependencies'])) {
+        return array(
+          'dependencies' => $asset['dependencies'],
+          'version' => isset($asset['version']) ? $asset['version'] : SOLI_TV__PLUGIN_VERSION,
+        );
+      }
+    }
+
+    return array('dependencies' => $fallback, 'version' => SOLI_TV__PLUGIN_VERSION);
+  }
+
   function adminAssets() {
     if (!function_exists('is_plugin_active')) {
       include_once(ABSPATH . 'wp-admin/includes/plugin.php');
     }
 
+    $editor_asset = $this->assetFor('index', array('wp-blocks', 'wp-element', 'wp-editor', 'wp-api-fetch', 'wp-i18n'));
+
     wp_register_style('block-tv-settings-css', plugin_dir_url(__FILE__) . 'build/index.css', array(), SOLI_TV__PLUGIN_VERSION);
-    wp_register_script('block-tv-settings-js', plugin_dir_url(__FILE__) . 'build/index.js', array('wp-blocks', 'wp-element', 'wp-editor', 'wp-api-fetch'));
+    wp_register_script('block-tv-settings-js', plugin_dir_url(__FILE__) . 'build/index.js', $editor_asset['dependencies'], $editor_asset['version']);
+    wp_set_script_translations('block-tv-settings-js', 'soli-tv', SOLI_TV__PLUGIN_DIR_PATH . 'languages');
     wp_localize_script('block-tv-settings-js', 'SoliTVData', array(
         'isSoliEventsPluginActive' => is_plugin_active('wp-soli-event-plugin/soli-event-plugin.php'),
     ));
@@ -34,7 +60,10 @@ class SoliTVSettingsBlock {
   }
 
   function theHTML($attributes) {
-    wp_enqueue_script('block-tv-settings-frontend', plugin_dir_url(__FILE__) . 'build/frontend.js', array('wp-blocks', 'wp-element','wp-api-fetch'), SOLI_TV__PLUGIN_VERSION, true);
+    $frontend_asset = $this->assetFor('frontend', array('wp-blocks', 'wp-element', 'wp-api-fetch', 'wp-i18n'));
+
+    wp_enqueue_script('block-tv-settings-frontend', plugin_dir_url(__FILE__) . 'build/frontend.js', $frontend_asset['dependencies'], $frontend_asset['version'], true);
+    wp_set_script_translations('block-tv-settings-frontend', 'soli-tv', SOLI_TV__PLUGIN_DIR_PATH . 'languages');
     wp_enqueue_style('block-tv-settings-frontend-styles', plugin_dir_url(__FILE__) . 'build/frontend.css');
     wp_localize_script('block-tv-settings-frontend', 'SoliTVData', array(
         'isSoliEventsPluginActive' => is_plugin_active('wp-soli-event-plugin/soli-event-plugin.php'),
