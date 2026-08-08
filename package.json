@@ -1,22 +1,31 @@
 {
-  "name": "tv-plugin",
-  "version": "1.0.0",
-  "description": "",
-  "main": "test.js",
+  "name": "wp-soli-tv-plugin",
+  "version": "0.1.0",
+  "description": "WordPress plugin driving the automated TV display for Muziekvereniging Soli",
+  "author": "Muziekvereniging Soli",
+  "license": "GPL-2.0-or-later",
   "scripts": {
-    "wp-env": "wp-env start --debug",
-    "build": "npm run build --workspace=blocks",
+    "build": "npm run build --workspace=blocks/tv-settings",
+    "start": "npm run start --workspace=blocks/tv-settings",
+    "i18n:make-pot": "wp-env run cli -- bash -c 'php -d memory_limit=512M /usr/local/bin/wp i18n make-pot wp-content/plugins/wp-soli-tv-plugin wp-content/plugins/wp-soli-tv-plugin/languages/soli-tv.pot --domain=soli-tv --exclude=node_modules,e2e,test-results,playwright-report'",
+    "i18n:make-mo": "wp-env run cli -- bash -c 'php -d memory_limit=512M /usr/local/bin/wp i18n make-mo wp-content/plugins/wp-soli-tv-plugin/languages'",
+    "i18n:make-json": "wp-env run cli -- bash -c 'php -d memory_limit=512M /usr/local/bin/wp i18n make-json wp-content/plugins/wp-soli-tv-plugin/languages --no-purge'",
+    "i18n:build": "npm run i18n:make-pot && npm run i18n:make-mo && npm run i18n:make-json",
+    "test:e2e": "wp-scripts test-playwright",
+    "test:e2e:watch": "wp-scripts test-playwright --watch",
+    "test:e2e:debug": "wp-scripts test-playwright --debug",
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "env:reset": "wp-env clean all && wp-env start",
     "publish": "npm run build && node ./publish.js"
   },
   "workspaces": [
     "blocks/tv-settings"
   ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@wordpress/env": "^10.28.0",
-    "archiver": "^7.0.1",
-    "express": "^4.19.2"
+    "@wordpress/scripts": "^31.0.0",
+    "archiver": "^7.0.1"
   }
 }

@@ -3,6 +3,7 @@ import calendarIcon from "../../assets/img/calendar.svg";
 import locationIcon from "../../assets/img/pin-1.svg";
 import dayjs from "dayjs";
 import {useState, useEffect} from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {displayRooms, showVenue} from "../utils/values";
@@ -52,13 +53,13 @@ function SelectedDate({date}) {
                 <div>
                     {location &&
                         <>
-                            <span>location.name</span>
-                            <span>location.address</span>
+                            <span>{location.name}</span>
+                            <span>{location.address}</span>
                         </>
                     }
                     {rooms &&
                         <>
-                            <a href="/muziekcentrum" target="_blank">Muziekcentrum Soli</a>
+                            <a href="/muziekcentrum" target="_blank">{__('Muziekcentrum Soli', 'soli-tv')}</a>
                             <br/>
                             <span>{displayRooms(rooms)}</span>
                         </>

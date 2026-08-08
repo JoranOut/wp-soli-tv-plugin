@@ -1,5 +1,6 @@
 import './single-tv-slide.scss';
 import { useMemo, RawHTML, useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import defaultBackground from '../../assets/img/default_background.jpg';
 
 export default function SingleTVSlide({slide, isActive}) {
@@ -17,7 +18,7 @@ export default function SingleTVSlide({slide, isActive}) {
             className={`soli-tv-block-single-slide ${slide.slide_type} ${slide.type} ${isActive ? 'is-active' : 'is-inactive'}`}
         >
             {showImage && (
-                slide.img ? <img className="content-image" src={`http://localhost:8888/?attachment_id=${slide.img}`}/>
+                slide.img ? <img className="content-image" src={`/?attachment_id=${slide.img}`}/>
                     : <img className="content-image" src={defaultBackground}/>)
             }
             {slide.content && showContent &&
@@ -28,7 +29,7 @@ export default function SingleTVSlide({slide, isActive}) {
             }
             {slide.link &&
                 <div className="qr-wrapper">
-                    <p>Scan de QR!</p>
+                    <p>{__('Scan de QR!', 'soli-tv')}</p>
                     <img
                         src={QRsrc}
                         alt="QR code"

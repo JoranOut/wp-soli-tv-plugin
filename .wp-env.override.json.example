@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy this file to .wp-env.override.json to load a sibling checkout of the event plugin. The TV block degrades gracefully when it is absent (SoliTVData.isSoliEventsPluginActive), so this is optional and must stay out of .wp-env.json - a relative path like this does not exist on CI runners and would break wp-env start there.",
+  "plugins": [
+    ".",
+    "../wp-soli-event-plugin"
+  ]
+}

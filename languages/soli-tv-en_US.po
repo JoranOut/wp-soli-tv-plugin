@@ -1,0 +1,118 @@
+# Translation of the Soli TV plugin.
+# Copyright (C) 2026 Muziekvereniging Soli
+# This file is distributed under the same license as the Soli TV plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Soli TV Plugin 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/JoranOut/wp-soli-tv-plugin/issues\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en_US\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: soli-tv\n"
+
+
+#. Plugin Name of the plugin
+#: soli-tv-plugin.php
+msgid "Soli TV Plugin"
+msgstr ""
+
+#. Description of the plugin
+#: soli-tv-plugin.php
+msgid "Drives the automated TV display for Muziekvereniging Soli."
+msgstr ""
+
+#. Author of the plugin
+#: soli-tv-plugin.php
+msgid "Joran Out"
+msgstr ""
+
+#: blocks/tv-settings/build/frontend.js:1
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/selected-date/selected-date.js:62
+msgid "Muziekcentrum Soli"
+msgstr ""
+
+#: blocks/tv-settings/build/frontend.js:1
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/slides/single-event-slide.js:30
+msgid "Agenda"
+msgstr ""
+
+#: blocks/tv-settings/build/frontend.js:1
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/slides/single-event-slide.js:44
+msgid "SOLI muziekcentrum"
+msgstr "SOLI music centre"
+
+#: blocks/tv-settings/build/frontend.js:1
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/slides/single-tv-slide.js:32
+msgid "Scan de QR!"
+msgstr "Scan the QR code!"
+
+#: blocks/tv-settings/build/index.js:1
+#: blocks/tv-settings/src/settings/settings.js:12
+msgid "Settings"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:1
+#: blocks/tv-settings/src/settings/settings.js:16
+msgid "Delay in seconds"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:1
+#: blocks/tv-settings/src/settings/settings.js:19
+msgid "Delay between slides (in seconds)"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/daterange-picker/daterange-picker.js:96
+msgid "tot"
+msgstr "to"
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:80
+msgid "Edit TV Message"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:93
+msgid "Add a title…"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:95
+msgid "Message title"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:106
+msgid "Active Date Range"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:113
+msgid "TV Type"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:117
+msgid "Image Only"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:118
+msgid "Image + Text"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:119
+msgid "Text Only"
+msgstr ""
+
+#: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:124
+msgid "URL for QR (optional)"
+msgstr ""

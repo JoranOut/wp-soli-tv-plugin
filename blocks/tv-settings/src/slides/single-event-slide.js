@@ -1,5 +1,6 @@
 import './single-event-slide.scss'
 import { useContext } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import {SlidesContext} from "../providers/slides-provider";
 import SelectedDate from "../selected-date/selected-date";
 import defaultBackground from '../../assets/img/default_background.jpg';
@@ -14,7 +15,7 @@ export default function SingleEventSlide({slide, isActive}) {
                 className="single-event"
             >
                 {(
-                    slide.img ? <img className="content-image" src={`http://localhost:8888/?attachment_id=${slide.img}`}/>
+                    slide.img ? <img className="content-image" src={`/?attachment_id=${slide.img}`}/>
                         : <img className="content-image" src={defaultBackground}/>)
                 }
                 <div className="content">
@@ -26,7 +27,7 @@ export default function SingleEventSlide({slide, isActive}) {
             </div>
             <div className="featured-events">
                 <div className="central-border wavy-border"/>
-                <h1>Agenda</h1>
+                <h1>{__('Agenda', 'soli-tv')}</h1>
                 {getEnabledEvents() && getEnabledEvents().map( event => {
                     const startDate = new Date(event.startDate);
                     const dayFormat = { day: '2-digit', month: 'short' };
@@ -40,7 +41,7 @@ export default function SingleEventSlide({slide, isActive}) {
                             <h3 className="title">{event.title}</h3>
                             <div className="line"/>
                             {event.location && <p className="location">{event.location}</p>}
-                            {event.rooms && <p className="location">SOLI muziekcentrum</p>}
+                            {event.rooms && <p className="location">{__('SOLI muziekcentrum', 'soli-tv')}</p>}
                         </div>
                     );
                 })}

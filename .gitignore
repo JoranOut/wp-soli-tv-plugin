@@ -316,3 +316,9 @@ wp-config.php
 
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij,wordpress,react,node
+
+# Playwright stored auth state
+e2e/.auth/
+test-results/
+playwright-report/
+*.zip

@@ -31,7 +31,7 @@ class TVMessageTableHandler {
     ) $this->charset;");
   }
 
-  function dropLocationTable() {
+  function dropTVMessageTable() {
     global $wpdb;
     $sql = "DROP TABLE IF EXISTS $this->tv_message_table";
     $wpdb->query($sql);

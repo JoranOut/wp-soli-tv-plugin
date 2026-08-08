@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/**
+**/node_modules/**
+
+# Config files
+package.json
+package-lock.json
+**/package.json
+**/package-lock.json
+.wp-env.json
+.gitignore
+.zipignore
+.tool-versions
+renovate.json
+playwright.config.js
+
+# Source files - the built bundles in blocks/tv-settings/build are shipped instead
+**/src/**
+**/webpack.config.js
+
+# Build scripts
+publish.js
+
+# Tests
+e2e/**
+test-results/**
+playwright-report/**
+
+# Documentation (dev only)
+CLAUDE.md
+
+# GitHub
+.github/**
+
+# Editor
+.idea/**
+
+# Build output
+*.zip
