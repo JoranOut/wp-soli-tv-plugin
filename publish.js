@@ -11,17 +11,29 @@ files.forEach(file => {
     }
 });
 
-// Step 2a: Read the readme.md file
-const readmeContent = fs.readFileSync(path.join(__dirname, 'readme.md'), 'utf8');
+// Step 2a: Read the README.md file
+const readmeContent = fs.readFileSync(path.join(__dirname, 'README.md'), 'utf8');
 
-// Step 2b: Extract Plugin Name and Current Version using regex
+// Step 2b: Extract Plugin Name using regex
 const pluginNameMatch = readmeContent.match(/~Plugin Name:\s*(.+?)~/);
 
 if (!pluginNameMatch) {
-    throw new Error('Could not find Plugin Name or Current Version in readme.md');
+    throw new Error('Could not find Plugin Name in README.md');
 }
 
 const pluginName = pluginNameMatch[1].trim();
+
+// Step 3: Read .zipignore file for exclusion patterns
+const zipignorePath = path.join(__dirname, '.zipignore');
+let ignorePatterns = [];
+
+if (fs.existsSync(zipignorePath)) {
+    const zipignoreContent = fs.readFileSync(zipignorePath, 'utf8');
+    ignorePatterns = zipignoreContent
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'));
+}
 
 const zipFileName = `${pluginName}.zip`;
 const outputFilePath = path.join(__dirname, zipFileName);
@@ -36,44 +48,22 @@ output.on('close', () => {
     console.log(`${archive.pointer()} total bytes`);
     console.log(`${zipFileName} has been created`);
     console.log('---------------------------------');
-    console.log('Archive has been finalized and the output file descriptor has closed.');
 });
 
 archive.on('error', function(err) {
     throw err;
 });
 
-output.on('close', function() {
-    console.log(`${archive.pointer()} total bytes`);
-});
-
 archive.on('entry', function(entry) {
     console.log(`Archiving file: ${entry.name}`);
 });
 
-archive.on('progress', function(progress) {
-    console.log(`Progress: ${progress.entries.processed} files processed, ${progress.fs.processedBytes} bytes written`);
-});
-
 archive.pipe(output);
 
-// Zip ignore
+// Zip with exclusions from .zipignore
 archive.glob('**/*', {
     cwd: __dirname,
-    ignore: [
-        'node_modules/**',
-        '**/node_modules/**',
-        'package.json',
-        'package-lock.json',
-        '**/package.json',
-        '**/package-lock.json',
-        '**/src/**',
-        '**/webpack.config.js',
-        '.wp-env.json',
-        '.gitignore',
-        '*.zip',
-        'publish.js',
-    ]
+    ignore: ignorePatterns
 });
 
 archive.finalize();
