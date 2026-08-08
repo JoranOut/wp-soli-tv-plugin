@@ -1,5 +1,6 @@
 import './single-tv-slide.scss';
 import { useMemo, RawHTML, useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import defaultBackground from '../../assets/img/default_background.jpg';
 
 export default function SingleTVSlide({slide, isActive}) {
@@ -28,7 +29,7 @@ export default function SingleTVSlide({slide, isActive}) {
             }
             {slide.link &&
                 <div className="qr-wrapper">
-                    <p>Scan de QR!</p>
+                    <p>{__('Scan de QR!', 'soli-tv')}</p>
                     <img
                         src={QRsrc}
                         alt="QR code"

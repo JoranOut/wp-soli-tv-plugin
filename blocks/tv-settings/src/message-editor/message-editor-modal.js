@@ -1,6 +1,7 @@
 import { Modal, Popover, ComboboxControl, TextControl } from '@wordpress/components';
 import { useState, useCallback, useContext, useMemo } from '@wordpress/element';
 import { select } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
 import {
     BlockEditorProvider,
     BlockList,
@@ -76,7 +77,7 @@ export default function MessageEditorModal({slide, icon}) {
                 src={icon || editIcon}/>
             {showPopup && (
                 <Modal
-                    title="Edit TV Message"
+                    title={__('Edit TV Message', 'soli-tv')}
                     size={"small"}
                     onRequestClose={closePopup}
                     focusOnMount={true}
@@ -89,9 +90,9 @@ export default function MessageEditorModal({slide, icon}) {
                         tagName="h1"
                         value={title}
                         onChange={setTitle}
-                        placeholder="Add a title…"
+                        placeholder={__('Add a title…', 'soli-tv')}
                         allowedFormats={[]}         // keep it plain text
-                        aria-label="Message title"
+                        aria-label={__('Message title', 'soli-tv')}
                         className="message-editor__title"
                         style={{
                             margin: '0 0 12px',
@@ -102,25 +103,25 @@ export default function MessageEditorModal({slide, icon}) {
                     />
 
                     <DateRangePicker
-                        label="Active Date Range"
+                        label={__('Active Date Range', 'soli-tv')}
                         start={( d => new Date(d.setDate(d.getDate()-1)) )(new Date)} // yesterday
                         end={( d => new Date(d.setDate(d.getDate()+31)) )(new Date)} // next month
                         onChange={range => console.log(range)}
                         />
 
                     <ComboboxControl
-                        label="TV Type"
+                        label={__('TV Type', 'soli-tv')}
                         value={type}
                         onChange={setType}
                         options={[
-                            { value: "img_only", label: "Image Only" },
-                            { value: "img_text", label: "Image + Text" },
-                            { value: "text_only", label: "Text Only" }
+                            { value: "img_only", label: __('Image Only', 'soli-tv') },
+                            { value: "img_text", label: __('Image + Text', 'soli-tv') },
+                            { value: "text_only", label: __('Text Only', 'soli-tv') }
                         ]}
                     />
 
                     <TextControl
-                        label="URL for QR (optional)"
+                        label={__('URL for QR (optional)', 'soli-tv')}
                         value={link}
                         type="url"
                         placeholder="https://example_link_for_QR.com"
