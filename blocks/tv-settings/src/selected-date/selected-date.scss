@@ -1,0 +1,33 @@
+.soli-tv-date-view {
+  display: grid;
+  grid-template-columns: min-content auto auto auto auto auto;
+  column-gap: 20px;
+  row-gap: 20px;
+  border-radius: 5px;
+  padding: 10px;
+
+  img {
+    height: 25px;
+  }
+
+  .warning {
+    display: grid;
+    grid-column: 1 / span 6;
+    justify-items: center;
+    font-size: 9pt;
+    margin: 0;
+    color: crimson;
+  }
+
+  .date {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / span 6;
+  }
+
+  .location {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / span 6;
+  }
+}

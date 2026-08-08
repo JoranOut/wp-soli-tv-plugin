@@ -1,0 +1,23 @@
+.soli-tv-slide-show {
+  position: fixed;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: white;
+
+  .soli-tv-block-single-slide {
+    position: absolute;
+    opacity: 0;
+    transition: opacity 420ms ease; /* fade-out/in */
+    pointer-events: none;
+    overflow: hidden;
+
+    &.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}

@@ -1,0 +1,22 @@
+.soli-tv-block-slide-preview {
+    display: flex;
+    background: black;
+    border-radius: 20px;
+    border: 15px inset #555;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    container-type: size;
+    max-height: 60vh;
+    box-shadow: 0 3px 7px #000;
+    box-sizing: content-box;
+
+    .tv-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: white;
+        transform-origin: top left;
+    }
+}
+

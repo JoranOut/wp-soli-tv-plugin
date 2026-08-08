@@ -1,0 +1,15 @@
+.image-button {
+  min-width: 40px;
+  min-height: 40px;
+  justify-content: center;
+  gap: 10px;
+}
+
+.image-button.label {
+  box-shadow: none;
+}
+
+.image-button img {
+  height: 21px;
+  filter: invert(42%) sepia(94%) saturate(4637%) hue-rotate(179deg) brightness(89%) contrast(105%);
+}

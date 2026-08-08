@@ -1,0 +1,22 @@
+{
+  "name": "tv-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test.js",
+  "scripts": {
+    "wp-env": "wp-env start --debug",
+    "build": "npm run build --workspace=blocks",
+    "publish": "npm run build && node ./publish.js"
+  },
+  "workspaces": [
+    "blocks/tv-settings"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@wordpress/env": "^10.28.0",
+    "archiver": "^7.0.1",
+    "express": "^4.19.2"
+  }
+}

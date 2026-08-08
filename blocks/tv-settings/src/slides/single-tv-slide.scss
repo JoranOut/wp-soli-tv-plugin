@@ -1,0 +1,68 @@
+.soli-tv-block-single-slide.message.img_text {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100%;
+  width: 100%;
+  align-content: center;
+  align-items: center;
+
+  .content-image {
+    max-width: 70%;
+    max-height: 70vh;
+    justify-self: center;
+  }
+
+  .content {
+    max-width: 70%;
+    max-height: 70vh;
+    align-content: center;
+    margin-bottom: 50px;
+  }
+}
+
+.soli-tv-block-single-slide.message.img_only {
+  display: block;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  align-content: center;
+  background: black;
+
+  .content-image {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+.soli-tv-block-single-slide.message.text_only {
+  display: block;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  align-content: center;
+
+  .content {
+    max-width: 100%;
+    max-height: calc(100% - 40px);
+    align-content: center;
+    justify-self: center;
+    aspect-ratio: 1.2;
+    font-size: 1.6em;
+    margin-bottom: 40px;
+  }
+}
+
+.soli-tv-block-single-slide.message {
+  .qr-wrapper {
+    position: absolute;
+    bottom: 50px;
+    right: 20px;
+    width: 160px;
+
+    p {
+      margin: 5px 0;
+      text-align: center;
+      background: white;
+    }
+  }
+}
