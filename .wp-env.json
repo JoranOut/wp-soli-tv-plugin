@@ -1,6 +1,12 @@
 {
-  "plugins": [".",
-  "../wp-soli-event-plugin"],
+  "plugins": [
+    "."
+  ],
+  "port": 8898,
+  "testsPort": 8899,
+  "lifecycleScripts": {
+    "afterStart": "wp-env run tests-cli -- wp core update-db --quiet && wp-env run cli -- wp core update-db --quiet && wp-env run tests-cli -- wp option update admin_email_lifespan 4102444800 --quiet && wp-env run cli -- wp option update admin_email_lifespan 4102444800 --quiet"
+  },
   "config": {
     "WP_DEBUG": true,
     "WP_DEBUG_LOG": true,
@@ -8,5 +14,10 @@
     "SCRIPT_DEBUG": true
   },
   "env": {
+    "tests": {
+      "config": {
+        "WP_DEBUG_DISPLAY": false
+      }
+    }
   }
 }
