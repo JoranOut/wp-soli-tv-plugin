@@ -1,5 +1,6 @@
 import "./daterange-picker.scss"
 import {useState, useEffect, useRef} from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
@@ -92,7 +93,7 @@ function DateRangePicker({start, end, label, onChange, ...props}) {
                             format=" D MMMM, YYYY"
                         />
                     </div>
-                    <div className="tot">tot</div>
+                    <div className="tot">{__('tot', 'soli-tv')}</div>
                     <div className={["end-date", validEndDate ? "" : "invalid"].join(" ")}>
                         <span className="weekday"
                               onClick={() => {

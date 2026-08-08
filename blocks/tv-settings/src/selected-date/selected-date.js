@@ -3,6 +3,7 @@ import calendarIcon from "../../assets/img/calendar.svg";
 import locationIcon from "../../assets/img/pin-1.svg";
 import dayjs from "dayjs";
 import {useState, useEffect} from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {displayRooms, showVenue} from "../utils/values";
