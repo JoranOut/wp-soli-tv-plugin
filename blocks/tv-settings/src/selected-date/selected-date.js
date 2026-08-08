@@ -52,13 +52,13 @@ function SelectedDate({date}) {
                 <div>
                     {location &&
                         <>
-                            <span>location.name</span>
-                            <span>location.address</span>
+                            <span>{location.name}</span>
+                            <span>{location.address}</span>
                         </>
                     }
                     {rooms &&
                         <>
-                            <a href="/muziekcentrum" target="_blank">Muziekcentrum Soli</a>
+                            <a href="/muziekcentrum" target="_blank">{__('Muziekcentrum Soli', 'soli-tv')}</a>
                             <br/>
                             <span>{displayRooms(rooms)}</span>
                         </>

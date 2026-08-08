@@ -14,7 +14,7 @@ export default function SingleEventSlide({slide, isActive}) {
                 className="single-event"
             >
                 {(
-                    slide.img ? <img className="content-image" src={`http://localhost:8888/?attachment_id=${slide.img}`}/>
+                    slide.img ? <img className="content-image" src={`/?attachment_id=${slide.img}`}/>
                         : <img className="content-image" src={defaultBackground}/>)
                 }
                 <div className="content">

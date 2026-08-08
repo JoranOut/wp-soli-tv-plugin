@@ -17,7 +17,7 @@ export default function SingleTVSlide({slide, isActive}) {
             className={`soli-tv-block-single-slide ${slide.slide_type} ${slide.type} ${isActive ? 'is-active' : 'is-inactive'}`}
         >
             {showImage && (
-                slide.img ? <img className="content-image" src={`http://localhost:8888/?attachment_id=${slide.img}`}/>
+                slide.img ? <img className="content-image" src={`/?attachment_id=${slide.img}`}/>
                     : <img className="content-image" src={defaultBackground}/>)
             }
             {slide.content && showContent &&
