@@ -7,7 +7,7 @@
 Plugin for wordpress dedicated to automated TV display [soli.nl/TV](https://www.soli.nl/TV)
 
 ~Plugin Name: wp-soli-tv-plugin~
-~Current Version: 2.0.3~
+~Current Version: 0.1.0~
 
 Contains:
 - Settings for the automation
