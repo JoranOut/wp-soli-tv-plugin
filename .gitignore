@@ -30,6 +30,7 @@
 # Gradle
 .idea/**/gradle.xml
 .idea/**/libraries
+.idea
 
 # Gradle and Maven with auto-import
 # When using Gradle or Maven with auto-import, you should exclude module files,
@@ -156,8 +157,9 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules/
-build/
+*/node_modules/
+**/.package-lock.json
+**/build/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -314,8 +316,3 @@ wp-config.php
 
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij,wordpress,react,node
-/.idea/wp-soli-dev-blocks.iml
-/.idea/.gitignore
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/vcs.xml
