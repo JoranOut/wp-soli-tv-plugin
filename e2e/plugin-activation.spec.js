@@ -30,17 +30,11 @@ test.describe( 'Plugin activation', () => {
 		expect( [ 200, 204 ] ).toContain( response.status() );
 	} );
 
-	test( 'loads wp-admin without a PHP fatal or warning', async ( { page } ) => {
-		await page.goto( '/wp-admin/index.php' );
-
-		// Confirm this is really the dashboard before asserting on its text.
-		await expect( page.locator( '#wpadminbar' ) ).toBeVisible();
-
-		const body = await page.locator( 'body' ).innerText();
-		expect( body ).not.toContain( 'Fatal error' );
-		expect( body ).not.toContain( 'Parse error' );
-		expect( body ).not.toContain( 'Warning: ' );
-	} );
+	// The ad-hoc "no PHP fatal or warning on the dashboard" assertion that used
+	// to live here moved to php-errors.spec.js, which owns every diagnostics
+	// surface and scopes the softer diagnostics to this plugin's own files. Its
+	// unscoped `Warning: ` check would have flagged unrelated core noise, and it
+	// only ever read wp-admin, which says nothing about front-end rendering.
 
 	test( 'registers the soli/tv-settings block in the editor', async ( {
 		page,
