@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) || class_exists( 'WPGitHubUpdater' ) || class_exists
 /**
  *
  *
- * @version 1.6
+ * @version 1.7
  * @author Joachim Kudish <info@jkudish.com>
  * @link http://jkudish.com
  * @package WP_GitHub_Updater
@@ -37,7 +37,7 @@ class WP_GitHub_Updater {
 	/**
 	 * GitHub Updater version
 	 */
-	const VERSION = 1.6;
+	const VERSION = 1.7;
 
 	/**
 	 * @var $config the config for the updater
@@ -56,6 +56,24 @@ class WP_GitHub_Updater {
 	 * @access private
 	 */
 	private $github_data;
+
+	/**
+	 * @var $releases_data temporarily store the releases fetched from GitHub, allows us to only load the data once per class instance
+	 * @access private
+	 */
+	private $releases_data;
+
+	/**
+	 * @var $channel_release temporarily store the resolved release for the installed version's channel
+	 * @access private
+	 */
+	private $channel_release;
+
+	/**
+	 * @var $remote_resolved whether the GitHub lookups have already run this request
+	 * @access private
+	 */
+	private $remote_resolved = false;
 
 
 	/**
@@ -151,16 +169,9 @@ class WP_GitHub_Updater {
 			$this->config['zip_url'] = $zip_url;
 		}
 
-
-		if ( ! isset( $this->config['new_version'] ) )
-			$this->config['new_version'] = $this->get_new_version();
-
-		if ( ! isset( $this->config['last_updated'] ) )
-			$this->config['last_updated'] = $this->get_date();
-
-		if ( ! isset( $this->config['description'] ) )
-			$this->config['description'] = $this->get_description();
-
+		// Local data only - nothing here may touch the network, see
+		// resolve_remote(). Reading the installed version is what lets that
+		// later lookup pick a channel, so it has to happen first.
 		$plugin_data = $this->get_plugin_data();
 		if ( ! isset( $this->config['plugin_name'] ) )
 			$this->config['plugin_name'] = $plugin_data['Name'];
@@ -177,6 +188,48 @@ class WP_GitHub_Updater {
 		if ( ! isset( $this->config['readme'] ) )
 			$this->config['readme'] = 'README.md';
 
+	}
+
+
+	/**
+	 * Resolve everything that needs a call to GitHub
+	 *
+	 * Deliberately not called from the constructor. set_defaults() runs on
+	 * `init` for every wp-admin request, so resolving there cost two API calls
+	 * per admin page view - against GitHub's unauthenticated limit of 60 per
+	 * hour, counted per source IP rather than per site or per plugin. That is
+	 * roughly 30 page views an hour for a single plugin, and about 2.5 once a
+	 * dozen plugins on the same host each do it, at which point every site on
+	 * that IP starts reading stale data it cannot refresh.
+	 *
+	 * WordPress only needs any of this when it actually checks for updates -
+	 * every 12 hours, or on an explicit force-check - so resolve on first use
+	 * and memoise for the rest of the request.
+	 *
+	 * @since 1.7
+	 * @return void
+	 */
+	public function resolve_remote() {
+		if ( $this->remote_resolved )
+			return;
+
+		$this->remote_resolved = true;
+
+		$release = $this->get_channel_release();
+
+		if ( ! isset( $this->config['new_version'] ) )
+			$this->config['new_version'] = ( false === $release ) ? false : $release['version'];
+
+		// Point the download at the release's built zip asset rather than at a
+		// branch archive, so the update installs what CI actually packaged.
+		if ( false !== $release && ! empty( $release['package'] ) )
+			$this->config['zip_url'] = $release['package'];
+
+		if ( ! isset( $this->config['last_updated'] ) )
+			$this->config['last_updated'] = $this->get_date();
+
+		if ( ! isset( $this->config['description'] ) )
+			$this->config['description'] = $this->get_description();
 	}
 
 
@@ -199,7 +252,13 @@ class WP_GitHub_Updater {
 	 * @return mixed
 	 */
 	public function http_request_sslverify( $args, $url ) {
-		if ( $this->config[ 'zip_url' ] == $url )
+		// The download happens in a later request than the update check, so
+		// config['zip_url'] may still hold the unresolved fallback by then -
+		// match any URL on the repo instead. Never resolve from inside this
+		// filter: it runs on every HTTP request, including our own, and would
+		// recurse.
+		if ( $this->config[ 'zip_url' ] == $url
+			|| ( ! empty( $this->config['github_url'] ) && 0 === strpos( $url, $this->config['github_url'] ) ) )
 			$args[ 'sslverify' ] = $this->config[ 'sslverify' ];
 
 		return $args;
@@ -207,54 +266,139 @@ class WP_GitHub_Updater {
 
 
 	/**
-	 * Get New Version from GitHub
+	 * Whether a version string belongs to the nightly channel
 	 *
-	 * @since 1.0
-	 * @return int $version the version number
+	 * Nightly builds are versioned `{stable}-nightly.{YYYYMMDD}` by
+	 * .github/workflows/nightly.yml, which stamps that version into the
+	 * plugin header of the zip it ships. A site is therefore on the nightly
+	 * channel exactly when its installed version carries that suffix.
+	 *
+	 * @since 1.7
+	 * @param string $version the version to classify
+	 * @return bool
 	 */
-	public function get_new_version() {
-		$version = get_site_transient( md5($this->config['slug']).'_new_version' );
+	public function is_nightly_version( $version ) {
+		return (bool) preg_match( '/-nightly\./i', (string) $version );
+	}
 
-		if ( $this->overrule_transients() || ( !isset( $version ) || !$version || '' == $version ) ) {
 
-			$raw_response = $this->remote_get( trailingslashit( $this->config['raw_url'] ) . basename( $this->config['slug'] ) );
+	/**
+	 * Get the repository's releases from the GitHub API
+	 *
+	 * @since 1.7
+	 * @return array|false $releases the releases, or false when unavailable
+	 */
+	public function get_releases() {
+		if ( isset( $this->releases_data ) && ! empty( $this->releases_data ) )
+			return $this->releases_data;
 
-			if ( is_wp_error( $raw_response ) )
-				$version = false;
+		$transient_key = md5( $this->config['slug'] ) . '_releases';
+		$cached = get_site_transient( $transient_key );
 
-			if (is_array($raw_response)) {
-				if (!empty($raw_response['body']))
-					preg_match( '/.*Version\:\s*(.*)$/mi', $raw_response['body'], $matches );
-			}
+		if ( ! $this->overrule_transients() && ! empty( $cached ) ) {
+			$this->releases_data = $cached;
+			return $cached;
+		}
 
-			if ( empty( $matches[1] ) )
-				$version = false;
-			else
-				$version = $matches[1];
+		$response = $this->remote_get( trailingslashit( $this->config['api_url'] ) . 'releases' );
 
-			// back compat for older readme version handling
-			// only done when there is no version found in file name
-			if ( false === $version ) {
-				$raw_response = $this->remote_get( trailingslashit( $this->config['raw_url'] ) . $this->config['readme'] );
+		// An API failure - a rate limit above all, since the unauthenticated
+		// limit is 60/hour and WP_GITHUB_FORCE_UPDATE re-checks on every admin
+		// page load - must not be reported as "no update available". Fall back
+		// to the last known good list instead.
+		if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) )
+			return empty( $cached ) ? false : $cached;
 
-				if ( is_wp_error( $raw_response ) )
-					return $version;
+		$releases = json_decode( wp_remote_retrieve_body( $response ) );
 
-				preg_match( '#^\s*`*~Current Version\:\s*([^~]*)~#im', $raw_response['body'], $__version );
+		if ( ! is_array( $releases ) )
+			return empty( $cached ) ? false : $cached;
 
-				if ( isset( $__version[1] ) ) {
-					$version_readme = $__version[1];
-					if ( -1 == version_compare( $version, $version_readme ) )
-						$version = $version_readme;
+		// refresh every 6 hours
+		set_site_transient( $transient_key, $releases, 60*60*6 );
+
+		$this->releases_data = $releases;
+
+		return $releases;
+	}
+
+
+	/**
+	 * Resolve the newest release within the installed version's channel
+	 *
+	 * A stable install only ever sees stable releases and a nightly install
+	 * only ever sees nightlies, so a site cannot cross channels by accident.
+	 * Without this filter a nightly install would be offered the stable build
+	 * as an "update", because version_compare() sorts `2.0.3-nightly.20260809`
+	 * below `2.0.3`.
+	 *
+	 * @since 1.7
+	 * @return array|false $release with keys 'version' and 'package', or false
+	 */
+	public function get_channel_release() {
+		if ( isset( $this->channel_release ) )
+			return $this->channel_release;
+
+		$releases = $this->get_releases();
+
+		if ( empty( $releases ) )
+			return false;
+
+		$want_nightly = $this->is_nightly_version( $this->config['version'] );
+		$best = false;
+
+		foreach ( $releases as $release ) {
+
+			if ( ! empty( $release->draft ) )
+				continue;
+
+			$version = ltrim( isset( $release->tag_name ) ? $release->tag_name : '', 'vV' );
+
+			if ( '' === $version )
+				continue;
+
+			if ( $this->is_nightly_version( $version ) !== $want_nightly )
+				continue;
+
+			// Only a release carrying a built zip asset is installable; the
+			// GitHub source zipball is an unbuilt tree and would ship a plugin
+			// without its compiled block assets.
+			$package = '';
+
+			if ( ! empty( $release->assets ) ) {
+				foreach ( $release->assets as $asset ) {
+					if ( ! empty( $asset->name ) && '.zip' === strtolower( substr( $asset->name, -4 ) ) ) {
+						$package = $asset->browser_download_url;
+						break;
+					}
 				}
 			}
 
-			// refresh every 6 hours
-			if ( false !== $version )
-				set_site_transient( md5($this->config['slug']).'_new_version', $version, 60*60*6 );
+			if ( '' === $package )
+				continue;
+
+			// GitHub returns releases newest-created first, but order by
+			// version so a re-published older tag cannot win.
+			if ( false === $best || 1 === version_compare( $version, $best['version'] ) )
+				$best = array( 'version' => $version, 'package' => $package );
 		}
 
-		return $version;
+		$this->channel_release = $best;
+
+		return $best;
+	}
+
+
+	/**
+	 * Get New Version from GitHub
+	 *
+	 * @since 1.0
+	 * @return string|false $version the version number
+	 */
+	public function get_new_version() {
+		$release = $this->get_channel_release();
+
+		return ( false === $release ) ? false : $release['version'];
 	}
 
 
@@ -361,6 +505,10 @@ class WP_GitHub_Updater {
 		if ( empty( $transient->checked ) )
 			return $transient;
 
+		// Resolve here rather than in the constructor: this runs only when
+		// WordPress genuinely checks for updates, not on every admin request.
+		$this->resolve_remote();
+
 		// check the version and decide if it's new
 		$update = version_compare( $this->config['new_version'], $this->config['version'] );
 
@@ -394,6 +542,10 @@ class WP_GitHub_Updater {
 		// Check if this call API is for the right plugin
 		if ( !isset( $response->slug ) || $response->slug != $this->config['slug'] )
 			return false;
+
+		// Only reached on this plugin's details screen, so the lookup is worth
+		// making here; every other plugins_api call costs nothing.
+		$this->resolve_remote();
 
 		$response->slug = $this->config['slug'];
 		$response->plugin_name  = $this->config['plugin_name'];
