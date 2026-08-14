@@ -63,8 +63,8 @@ add_action('init', function () {
       // releases API and overrides this with the release's zip asset.
       'zip_url' => 'https://github.com/JoranOut/wp-soli-tv-plugin/releases/latest/download/wp-soli-tv-plugin.zip', // the zip url of the GitHub repo
       'sslverify' => true, // whether WP should check the validity of the SSL cert when getting an update, see https://github.com/jkudish/WordPress-GitHub-Plugin-Updater/issues/2 and https://github.com/jkudish/WordPress-GitHub-Plugin-Updater/issues/4 for details
-      'requires' => '6.0.0', // which version of WordPress does your plugin require?
-      'tested' => '6.3.1',  // which version of WordPress is your plugin tested up to?
+      'requires' => '6.9', // which version of WordPress does your plugin require?
+      'tested' => '7.0.4',  // which version of WordPress is your plugin tested up to?
       'readme' => 'README.md', // which file to use as the readme for the version number
     );
 

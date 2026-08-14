@@ -7,8 +7,19 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  e2e:
+    # One leg per WordPress version we claim to support. `floor` is the oldest
+    # supported branch, declared once in package.json as wordpress.requiresAtLeast
+    # and resolved here to its newest patch; `latest` is whatever wordpress.org
+    # currently ships. Production runs behind staging, so testing only the newest
+    # release would leave the version actually serving soli.nl unexercised.
+    name: e2e (WP ${{ matrix.channel }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [latest, floor]
 
     steps:
       - name: Checkout repository
@@ -23,6 +34,44 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Resolve the WordPress version for this leg
+        id: wp
+        run: |
+          set -euo pipefail
+          FLOOR_BRANCH=$(node -p "require('./package.json').wordpress.requiresAtLeast")
+          LATEST=$(curl -sf https://api.wordpress.org/core/version-check/1.7/ \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).offers[0].current))')
+
+          if [ "${{ matrix.channel }}" = "latest" ]; then
+            VERSION="$LATEST"
+          else
+            # Newest patch on the floor branch, so security fixes are picked up
+            # without anyone editing the matrix.
+            VERSION=$(curl -sf https://api.wordpress.org/core/stable-check/1.0/ \
+              | FLOOR="$FLOOR_BRANCH" node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+                  const f=process.env.FLOOR;
+                  const k=v=>v.split(".").map(Number);
+                  const c=Object.keys(JSON.parse(s)).filter(v=>v===f||v.startsWith(f+"."));
+                  if(!c.length){console.error("no releases on branch "+f);process.exit(1);}
+                  c.sort((a,b)=>{const x=k(a),y=k(b);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0);}return 0;});
+                  console.log(c[c.length-1]);
+                })')
+          fi
+
+          test -n "$VERSION"
+          # Both legs name an explicit zip. The reference implementation leaves
+          # this empty on the latest leg and lets wp-env resolve core itself, but
+          # that path goes through the WordPress/WordPress git mirror: on
+          # 2026-08-12 WordPress shipped 7.0.4 without pushing the tag and every
+          # Soli repo's CI died on `couldn't find remote ref 7.0.4`. The zips are
+          # published with the release, so they do not have that failure mode.
+          # WP_ENV_CORE supersedes the "core" pin in .wp-env.json (wp-env merges
+          # environment overrides last - see lib/config/parse-config.js), which
+          # is what lets the floor leg run at all.
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "WP_ENV_CORE=https://wordpress.org/wordpress-${VERSION}.zip" >> $GITHUB_ENV
+          echo "Leg '${{ matrix.channel }}' targets WordPress ${VERSION}"
+
       - name: Build blocks
         run: npm run build
 
@@ -32,6 +81,33 @@ jobs:
       - name: Start wp-env
         run: npm run env:start
 
+      - name: Verify wp-env installed the version this leg targets
+        run: |
+          set -euo pipefail
+          # The release workflows stamp 'requires' and 'tested' from these same
+          # two numbers, so if wp-env quietly installed something else the plugin
+          # would advertise compatibility it never demonstrated.
+          # Note the run container is tests-cli, not tests.
+          RAW=$(npx wp-env run tests-cli wp core version 2>&1 | tr -d '\r')
+          ACTUAL=$(printf '%s\n' "$RAW" | grep -oE '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | head -1 || true)
+          WANTED="${{ steps.wp.outputs.version }}"
+
+          if [ -z "$ACTUAL" ]; then
+            echo "::error::could not read the WordPress version from wp-env. Raw output:"
+            printf '%s\n' "$RAW"
+            exit 1
+          fi
+
+          echo "wp-env installed WordPress ${ACTUAL}; this leg targets ${WANTED}"
+          echo "WP ${ACTUAL} (${{ matrix.channel }})" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$ACTUAL" != "$WANTED" ]; then
+            echo "::error::wp-env installed ${ACTUAL} but this leg targets ${WANTED}."
+            echo "::error::Usual causes: WP_ENV_CORE no longer overrides the core pin in"
+            echo "::error::.wp-env.json, or WordPress released mid-run (re-run the job)."
+            exit 1
+          fi
+
       - name: Run Playwright tests
         run: npm run test:e2e
 
@@ -39,6 +115,28 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.channel }}
           path: playwright-report/
           retention-days: 7
+
+  # Single required status check. The branch ruleset requires the context `test`,
+  # and a matrix job reports one context per leg (`e2e (WP latest)`, `e2e (WP
+  # floor)`) rather than a bare one - so this job exists to collapse the matrix
+  # back into the name the ruleset expects. Renaming the required check instead
+  # would need a careful non-atomic ruleset change; this needs none.
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    needs: e2e
+    if: always()
+
+    steps:
+      - name: Require every WordPress version to pass
+        run: |
+          set -euo pipefail
+          RESULT="${{ needs.e2e.result }}"
+          if [ "$RESULT" != "success" ]; then
+            echo "::error::the e2e matrix did not pass (result: ${RESULT})"
+            exit 1
+          fi
+          echo "All WordPress versions passed."

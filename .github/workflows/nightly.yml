@@ -66,6 +66,31 @@ jobs:
           test "$(node -p "require('./package.json').version")" = "$V"
           echo "Stamped $V into all version locations."
 
+      - name: Stamp the supported WordPress range
+        run: |
+          set -euo pipefail
+          # Both ends of the range come from what the e2e suite actually ran:
+          # 'tested' from wordpress.org's current release, 'requires' from the
+          # floor branch declared in package.json. test.yml runs a leg against
+          # each and fails if wp-env installed anything else, so neither number
+          # is a claim nobody checked.
+          WP=$(curl -sf https://api.wordpress.org/core/version-check/1.7/ \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).offers[0].current))')
+          FLOOR=$(node -p "require('./package.json').wordpress.requiresAtLeast")
+          test -n "$WP" && test -n "$FLOOR"
+
+          sed -i -E "s|('tested' => ')[^']*(')|\1${WP}\2|" soli-tv-plugin.php
+          sed -i -E "s|('requires' => ')[^']*(')|\1${FLOOR}\2|" soli-tv-plugin.php
+
+          for pair in "tested:${WP}" "requires:${FLOOR}"; do
+            key="${pair%%:*}"; val="${pair#*:}"
+            if ! grep -qF -- "'${key}' => '${val}'" soli-tv-plugin.php; then
+              echo "::error::failed to stamp '${key}' => '${val}'"
+              exit 1
+            fi
+          done
+          echo "Stamped supported WordPress range: ${FLOOR} to ${WP}."
+
       - name: Build package
         run: |
           # Build the block bundles, then zip. i18n:build is skipped - it needs wp-env.
