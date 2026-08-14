@@ -19,6 +19,13 @@
     "env:reset": "wp-env clean all && wp-env start",
     "publish": "npm run build && node ./publish.js"
   },
+  "engines": {
+    "node": ">=24"
+  },
+  "wordpress": {
+    "_comment": "Oldest supported WordPress branch. The e2e suite runs against the newest patch of this branch as well as the newest release, and the release workflows stamp it into the plugin's 'requires'. Raise it when production no longer runs it.",
+    "requiresAtLeast": "6.9"
+  },
   "workspaces": [
     "blocks/tv-settings"
   ],
