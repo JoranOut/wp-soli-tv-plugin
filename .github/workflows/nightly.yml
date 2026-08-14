@@ -16,6 +16,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          # rev-list --count needs the whole history, not the default shallow clone
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -26,16 +29,43 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Get current version and date
+      - name: Get current version and build number
         id: version
         run: |
+          set -euo pipefail
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          DATE=$(date +'%Y%m%d')
-          NIGHTLY_VERSION="${CURRENT_VERSION}-nightly.${DATE}"
+          # The build number has to be monotonic, because the updater decides
+          # whether to offer an update with version_compare(). A commit count is
+          # monotonic and only moves when commits land, so an idle repo keeps
+          # producing the same version and no site is nagged. A date bumps daily
+          # whether or not anything changed, and a short SHA cannot be used at
+          # all: version_compare() orders SHAs arbitrarily, so roughly half of
+          # all builds would compare as "not newer" and never install.
+          BUILD=$(git rev-list --count HEAD)
+          NIGHTLY_VERSION="${CURRENT_VERSION}-nightly.${BUILD}"
           echo "nightly_version=${NIGHTLY_VERSION}" >> $GITHUB_OUTPUT
-          echo "date=${DATE}" >> $GITHUB_OUTPUT
+          echo "build=${BUILD}" >> $GITHUB_OUTPUT
+          echo "date=$(date -u +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Skip when main has not moved
+        id: guard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ steps.version.outputs.nightly_version }}
+        run: |
+          set -euo pipefail
+          # Same commit count means no commits since the last nightly. Re-cutting
+          # an identical release would only churn the tag and re-upload the same
+          # zip, so stop here instead.
+          if gh release view "$TAG" --json tagName >/dev/null 2>&1; then
+            echo "$TAG already exists - no commits since the last nightly, nothing to publish."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Stamp nightly version
+        if: steps.guard.outputs.skip != 'true'
         env:
           V: ${{ steps.version.outputs.nightly_version }}
         run: |
@@ -67,6 +97,7 @@ jobs:
           echo "Stamped $V into all version locations."
 
       - name: Stamp the supported WordPress range
+        if: steps.guard.outputs.skip != 'true'
         run: |
           set -euo pipefail
           # Both ends of the range come from what the e2e suite actually ran:
@@ -92,12 +123,14 @@ jobs:
           echo "Stamped supported WordPress range: ${FLOOR} to ${WP}."
 
       - name: Build package
+        if: steps.guard.outputs.skip != 'true'
         run: |
           # Build the block bundles, then zip. i18n:build is skipped - it needs wp-env.
           npm run build
           node ./publish.js
 
       - name: Delete previous nightly release
+        if: steps.guard.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -109,15 +142,20 @@ jobs:
           done
 
       - name: Create nightly release
+        if: steps.guard.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "v${{ steps.version.outputs.nightly_version }}" \
-            --title "Nightly Build ${{ steps.version.outputs.date }}" \
+            --title "Nightly Build ${{ steps.version.outputs.nightly_version }}" \
             --notes "Automated nightly build from main branch.
 
           **Version:** ${{ steps.version.outputs.nightly_version }}
-          **Built from:** ${{ github.sha }}
+          **Build:** ${{ steps.version.outputs.build }} commits on main
+          **Built from:** ${{ github.sha }} on ${{ steps.version.outputs.date }}
+
+          The build number is the commit count, so this version only changes
+          when commits land - an idle repo will not prompt sites to update.
 
           This is a pre-release build for testing purposes." \
             --prerelease \
