@@ -79,7 +79,7 @@ class SoliTVSettingsBlock {
 
 $soliBlockIssueTracker = new SoliTVSettingsBlock();
 
-function modify_post_type_args($args, $post_type) {
+function soli_tv_modify_post_type_args($args, $post_type) {
   if ('post' === $post_type || 'page' === $post_type) {
     $args['template'] = array(
       array('soli/tv-settings', array(
@@ -95,7 +95,7 @@ function modify_post_type_args($args, $post_type) {
   return $args;
 }
 
-add_filter('register_post_type_args', 'modify_post_type_args', 10, 2);
+add_filter('register_post_type_args', 'soli_tv_modify_post_type_args', 10, 2);
 
 function register_soli_groups_meta() {
   $post_types = array('post', 'page', 'soli_event');
