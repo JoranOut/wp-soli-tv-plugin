@@ -79,24 +79,6 @@ class SoliTVSettingsBlock {
 
 $soliBlockIssueTracker = new SoliTVSettingsBlock();
 
-function soli_tv_modify_post_type_args($args, $post_type) {
-  if ('post' === $post_type || 'page' === $post_type) {
-    $args['template'] = array(
-      array('soli/tv-settings', array(
-        'lock' => array(
-          'move' => true,
-          'remove' => true
-        )
-      )),
-      // You can add more blocks to the template here if needed
-    );
-//    $args['template_lock'] = 'all'; // Optional: Lock the template to prevent users from removing default blocks
-  }
-  return $args;
-}
-
-add_filter('register_post_type_args', 'soli_tv_modify_post_type_args', 10, 2);
-
 function register_soli_groups_meta() {
   $post_types = array('post', 'page', 'soli_event');
 
