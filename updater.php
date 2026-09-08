@@ -268,10 +268,13 @@ class WP_GitHub_Updater {
 	/**
 	 * Whether a version string belongs to the nightly channel
 	 *
-	 * Nightly builds are versioned `{stable}-nightly.{YYYYMMDD}` by
-	 * .github/workflows/nightly.yml, which stamps that version into the
-	 * plugin header of the zip it ships. A site is therefore on the nightly
-	 * channel exactly when its installed version carries that suffix.
+	 * Nightly builds are versioned `{stable}-nightly.{commits}` by
+	 * .github/workflows/nightly.yml - the build number is the commit count on
+	 * main, which only moves when commits land - and it stamps that version
+	 * into the plugin header of the zip it ships. A site is therefore on the
+	 * nightly channel exactly when its installed version carries that suffix.
+	 * The match below is on the `-nightly.` suffix alone, so it does not depend
+	 * on how the build number is formed.
 	 *
 	 * @since 1.7
 	 * @param string $version the version to classify
