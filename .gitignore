@@ -322,3 +322,6 @@ e2e/.auth/
 test-results/
 playwright-report/
 *.zip
+
+# Local-only wp-env overrides (see .wp-env.override.json.example)
+.wp-env.override.json

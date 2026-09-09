@@ -33,9 +33,14 @@ soli-tv-plugin.php          Bootstrap: constants, activation, textdomain, GitHub
 `SoliTVSettingsBlock` passes `SoliTVData.isSoliEventsPluginActive` to the front end. The event
 slides are only populated when `wp-soli-event-plugin` is active; the slideshow works without it.
 
+To load it locally, copy `.wp-env.override.json.example` to `.wp-env.override.json`. That file is
+gitignored, and it must carry **no `_comment` key**: wp-env validates config files against a fixed
+set of options and aborts with `"_comment" is not a configuration option`, so a commented example
+cannot be copied as-is. The example shipped with a `_comment` until 2026-09-09, which meant the
+documented way to load the event plugin broke `wp-env start` for anyone who followed it.
+
 This is why `.wp-env.json` does **not** reference a sibling checkout — a relative path like
-`../wp-soli-event-plugin` does not exist on a CI runner and would break `wp-env start` there. To
-load it locally, copy `.wp-env.override.json.example` to `.wp-env.override.json`.
+`../wp-soli-event-plugin` does not exist on a CI runner and would break `wp-env start` there.
 
 ## Database
 
