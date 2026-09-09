@@ -28,6 +28,14 @@ export default function MessageEditorModal({slide, icon}) {
     const [imgId, setImgId] = useState(slide?.img || null);
     const [link, setLink] = useState(slide?.link || '');
 
+    // The picker's own state lives here so the chosen window survives the save.
+    // Previously its onChange only logged, and the provider replaced whatever
+    // the user picked, so the range was decoration.
+    const [dateRange, setDateRange] = useState(() => ({
+        start: slide?.startDate ? new Date(slide.startDate) : defaultRangeStart(),
+        end: slide?.endDate ? new Date(slide.endDate) : defaultRangeEnd(),
+    }));
+
     const {saveTVMessage} = useContext(TvMessageContext);
 
     const openPopup = () => {
@@ -66,6 +74,8 @@ export default function MessageEditorModal({slide, icon}) {
             img: imgId,
             link: link?.trim() || null,
             content: serialize(blocks),
+            startDate: dateRange.start,
+            endDate: dateRange.end,
         })
         closePopup()
     }
@@ -104,9 +114,9 @@ export default function MessageEditorModal({slide, icon}) {
 
                     <DateRangePicker
                         label={__('Active Date Range', 'soli-tv')}
-                        start={( d => new Date(d.setDate(d.getDate()-1)) )(new Date)} // yesterday
-                        end={( d => new Date(d.setDate(d.getDate()+31)) )(new Date)} // next month
-                        onChange={range => console.log(range)}
+                        start={dateRange.start}
+                        end={dateRange.end}
+                        onChange={setDateRange}
                         />
 
                     <ComboboxControl
@@ -168,4 +178,15 @@ export default function MessageEditorModal({slide, icon}) {
         </div>
 
     )
+}
+
+/** A new message defaults to being active from now until +31 days. */
+function defaultRangeStart(){
+    return new Date();
+}
+
+function defaultRangeEnd(){
+    const d = new Date();
+    d.setDate(d.getDate() + 31);
+    return d;
 }
