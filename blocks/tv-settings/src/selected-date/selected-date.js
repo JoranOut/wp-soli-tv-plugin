@@ -1,53 +1,85 @@
 import './selected-date.scss';
 import calendarIcon from "../../assets/img/calendar.svg";
 import locationIcon from "../../assets/img/pin-1.svg";
-import dayjs from "dayjs";
-import {useState, useEffect} from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
-import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {displayRooms, showVenue} from "../utils/values";
 
+/**
+ * Date and time formatters for the slideshow.
+ *
+ * These replace dayjs and `@mui/x-date-pickers`. The MUI `LocalizationProvider`
+ * this component used to render wrapped plain text with no picker inside it, so
+ * it did nothing but pull an adapter into the bundle the TV downloads.
+ *
+ * Built once at module scope rather than per render: constructing an
+ * Intl.DateTimeFormat is the expensive part, and formatting is cheap.
+ */
+const DATE_FORMAT = new Intl.DateTimeFormat('nl-NL', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+});
 
-function SelectedDate({date}) {
-    dayjs.locale("nl");
-    const [startDate, setStartDate] = useState(dayjs(date?.startDate));
-    const [endDate, setEndDate] = useState(dayjs(date?.endDate));
-    const [location, setLocation] = useState(date?.location);
-    const [rooms, setRooms] = useState(date?.rooms);
+const WEEKDAY_FORMAT = new Intl.DateTimeFormat('nl-NL', { weekday: 'long' });
 
+const TIME_FORMAT = new Intl.DateTimeFormat('nl-NL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+});
 
-    const isSameDay = (d1, d2) => {
-        return d1.date() === d2.date() &&
-            d1.month() === d2.month() &&
-            d1.year() === d2.year();
+/** `09 september 2026 (woensdag)`, matching the previous dayjs format. */
+function formatDate(date) {
+    if (!isValid(date)) {
+        return '';
     }
 
-    let today = dayjs();
+    return DATE_FORMAT.format(date) + ' (' + WEEKDAY_FORMAT.format(date) + ')';
+}
 
-    useEffect(() => {
-        setStartDate(dayjs(date?.startDate));
-        setEndDate(dayjs(date?.endDate));
-        setLocation(date?.location);
-        setRooms(date?.rooms);
-        today = dayjs();
-    }, [date]);
+/** `20:15`. */
+function formatTime(date) {
+    return isValid(date) ? TIME_FORMAT.format(date) : '';
+}
+
+function isValid(date) {
+    return date instanceof Date && !isNaN(date.getTime());
+}
+
+function toDate(value) {
+    if (!value) {
+        return null;
+    }
+
+    return value instanceof Date ? value : new Date(value);
+}
+
+function isSameDay(d1, d2) {
+    return isValid(d1) && isValid(d2) &&
+        d1.getDate() === d2.getDate() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getFullYear() === d2.getFullYear();
+}
+
+function SelectedDate({date}) {
+    // Derived straight from the prop. This used to be mirrored into state and
+    // re-synced in an effect, which is what the effect existed for; computing it
+    // is equivalent and drops the extra render.
+    const startDate = toDate(date?.startDate);
+    const endDate = toDate(date?.endDate);
+    const location = date?.location;
+    const rooms = date?.rooms;
 
     return (
         <div className="soli-tv-date-view">
-            <LocalizationProvider
-                dateAdapter={AdapterDayjs}
-                adapterLocale={'nl'}
-            >
-                <div className="date">
-                    <img src={calendarIcon}/>
-                    <span>{startDate.format("DD MMMM YYYY (dddd)")}</span>
-                    <span>{startDate.format("HH:mm")}</span>
-                    <span> - </span>
-                    <span>{endDate.format("HH:mm")}</span>
-                    <span>{!isSameDay(startDate, endDate) ? endDate.format("DD MMMM YYYY (dddd)") : ""}</span>
-                </div>
-            </LocalizationProvider>
+            <div className="date">
+                <img src={calendarIcon}/>
+                <span>{formatDate(startDate)}</span>
+                <span>{formatTime(startDate)}</span>
+                <span> - </span>
+                <span>{formatTime(endDate)}</span>
+                <span>{!isSameDay(startDate, endDate) ? formatDate(endDate) : ""}</span>
+            </div>
             <div className="location">
                 <img src={locationIcon}/>
                 <div>
