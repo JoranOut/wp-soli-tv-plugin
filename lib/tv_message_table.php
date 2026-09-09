@@ -41,26 +41,48 @@ class TVMessageTableHandler {
       if (empty($message_id)) {
           return null;
       }
-      $this->loadTVMessagesById($message_id);
+      return $this->loadTVMessagesById($message_id);
   }
 
+  /**
+   * One message by id, or null when there is no such row.
+   *
+   * Returns a single row rather than a list: the route this backs is
+   * `/message/{id}`, and handing back a one-element array made every caller
+   * unwrap it. `get_row()` also answers null for a miss, which is what the
+   * endpoint's 204 branch tests.
+   */
   function loadTVMessagesById($message_id) {
       $query = $this->wpdb->prepare("
-              SELECT m.* 
+              SELECT m.*
               FROM $this->tv_message_table m
               WHERE m.id = %d", $message_id);
-      return $this->wpdb->get_results($query, ARRAY_A);
+      return $this->wpdb->get_row($query, ARRAY_A);
   }
 
   function getTVMessages() {
     return $this->loadCurrentTVMessages();
   }
 
+  /**
+   * Messages whose active window covers this moment.
+   *
+   * Bounds are compared against `current_time('mysql')` - site-local, matching
+   * how the editor sends them - and not against MySQL's `current_date`, which
+   * is midnight today: a message starting later today used to stay off the
+   * screen until the next day, and one ending today lingered all day. The
+   * start bound is inclusive so a window may legitimately open right now.
+   *
+   * The placeholders also matter: `wpdb::prepare()` calls `_doing_it_wrong()`
+   * when handed a query with no placeholder at all, so the previous version
+   * emitted a notice on every poll from the TV.
+   */
   function loadCurrentTVMessages() {
+    $now = current_time('mysql');
     $query = $this->wpdb->prepare("
                 SELECT m.*
                 FROM $this->tv_message_table m
-                WHERE m.start_date < current_date and m.end_date >= current_date");
+                WHERE m.start_date <= %s AND m.end_date >= %s", $now, $now);
     return $this->wpdb->get_results($query, ARRAY_A);
   }
 
@@ -78,50 +100,51 @@ class TVMessageTableHandler {
     ]);
   }
 
+  /**
+   * Insert or update one message.
+   *
+   * Uses `wpdb::insert()`/`wpdb::update()` rather than hand-built SQL because
+   * of `img`: it is a nullable BIGINT, and `wpdb::prepare()` renders a PHP null
+   * bound to `%s` as an empty string, so "no image" was stored as `0` - and
+   * would abort the write outright under strict SQL mode. These two methods
+   * emit a real `NULL` for a null value and take an explicit format per column,
+   * so `img` is finally written as the integer it is declared to be.
+   */
   function saveTVMessage($message) {
-    if (empty($message->id)|| $message->id === -1) {
-      $query = $this->wpdb->prepare("
-                        INSERT INTO $this->tv_message_table 
-                            (title, type, content, start_date, end_date, status, img, link)
-                        VALUES
-                            (%s, %s, %s, %s, %s, %s, %s, %s)",
-          $message->title,
-          $message->type,
-          $message->content,
-          $message->start_date,
-          $message->end_date,
-          $message->status,
-          $message->img,
-          $message->link
-      );
+    $data = array(
+      'title'      => $message->title,
+      'type'       => $message->type,
+      'content'    => $message->content,
+      'start_date' => $message->start_date,
+      'end_date'   => $message->end_date,
+      'status'     => $message->status,
+      'img'        => isset($message->img) ? (int) $message->img : null,
+      'link'       => $message->link,
+    );
 
-      $this->wpdb->get_results($query, ARRAY_A);
+    // Order matches $data. %d for the attachment id, %s for the rest; a null
+    // value ignores its format and is written as NULL either way.
+    $formats = array('%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s');
+
+    if (empty($message->id) || $message->id === -1) {
+      $written = $this->wpdb->insert($this->tv_message_table, $data, $formats);
+      if (false === $written) {
+        return null;
+      }
       $message->id = $this->wpdb->insert_id;
     } else {
-      $query = $this->wpdb->prepare("
-                        UPDATE $this->tv_message_table 
-                        SET title = %s,
-                            type = %s,
-                            content = %s,
-                            start_date = %s,
-                            end_date = %s,
-                            status = %s,
-                            img = %s,
-                            link = %s
-                        WHERE id=%d;",
-          $message->title,
-          $message->type,
-          $message->content,
-          $message->start_date,
-          $message->end_date,
-          $message->status,
-          $message->img,
-          $message->link,
-          $message->id
+      $written = $this->wpdb->update(
+        $this->tv_message_table,
+        $data,
+        array('id' => $message->id),
+        $formats,
+        array('%d')
       );
-
-      $this->wpdb->get_results($query, ARRAY_A);
+      if (false === $written) {
+        return null;
+      }
     }
+
     return $message;
   }
 }

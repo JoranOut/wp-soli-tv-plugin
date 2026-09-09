@@ -9,19 +9,22 @@ export const TvMessageContext = createContext({
 export default function TvMessageProvider({ children }) {
     const [messages, setMessages] = useState([]);
 
-    const yesterday = ( d => new Date(d.setDate(d.getDate()-1)) )(new Date);
-    const nextMonth = ( d => new Date(d.setDate(d.getDate()+31)) )(new Date);
-
     const saveTVMessage = (message) => {
-        // This function can be used to save messages, e.g., to a server or local storage
-        message.startDate = yesterday;
-        message.endDate = nextMonth;
-        message.status = 'draft';
+        // The active window and the status come from the caller. They used to be
+        // overwritten here with yesterday..+31 days and 'draft' on every save,
+        // which meant the date range the editor collected was discarded and no
+        // message could ever leave draft. Only fall back when a field is absent.
+        const payload = {
+            ...message,
+            startDate: message.startDate || defaultStart(),
+            endDate: message.endDate || defaultEnd(),
+            status: message.status || 'draft',
+        };
 
         apiFetch({
             path: 'soli_tv/v1/message/' + (message.id ? message.id : ''),
             method: 'POST',
-            data: toTVMessageDto(message)
+            data: toTVMessageDto(payload)
         }).then(
             (response) => {
                 let newMessage = fromTVMessageDto(response)
@@ -51,14 +54,8 @@ export default function TvMessageProvider({ children }) {
             );
     };
 
-    const tomorrow = ( d => new Date(d.setDate(d.getDate()+1)) )(new Date);
-
     useEffect(() => {
         getTVMessages();
-        // setMessages([
-        //     { id: 1, title: 'Welcome to TV Settings', content: 'This is your first message.', img: 7, startDate: yesterday, endDate: tomorrow},
-        //     { id: 2, title: 'Bericht 2', content: null, img: null, startDate: yesterday, endDate: tomorrow },
-        // ])
     }, []);
 
     return (
@@ -74,12 +71,58 @@ function toTVMessageDto(message){
         title: message.title,
         type: message.type,
         content: message.content,
-        start_date: message.startDate,
-        end_date: message.endDate,
+        start_date: toMysqlDateTime(message.startDate),
+        end_date: toMysqlDateTime(message.endDate),
         img: message.img,
         status: message.status,
         link: message.link,
     }
+}
+
+/**
+ * Formats a date as MySQL DATETIME in the browser's own timezone.
+ *
+ * A Date serializes to JSON as an ISO-8601 string with a `T` separator and a
+ * `Z` suffix, which is not a DATETIME literal: MySQL rejects it, so the column
+ * ended up zeroed. The site's timezone is what the editor is showing and what
+ * the active-window query compares against via current_time('mysql'), so the
+ * local components - not the UTC ones - are the right ones to send.
+ *
+ * @param {Date|string|null} value
+ * @return {string|null} `YYYY-MM-DD HH:mm:ss`, or null when there is no date.
+ */
+function toMysqlDateTime(value){
+    if (!value) {
+        return null;
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) {
+        return null;
+    }
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    return [
+        date.getFullYear(),
+        pad(date.getMonth() + 1),
+        pad(date.getDate()),
+    ].join('-') + ' ' + [
+        pad(date.getHours()),
+        pad(date.getMinutes()),
+        pad(date.getSeconds()),
+    ].join(':');
+}
+
+/** Fallback active window for a message saved without one: today until +31 days. */
+function defaultStart(){
+    return new Date();
+}
+
+function defaultEnd(){
+    const d = new Date();
+    d.setDate(d.getDate() + 31);
+    return d;
 }
 
 function fromTVMessageDto(message){

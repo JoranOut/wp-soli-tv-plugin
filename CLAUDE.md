@@ -62,9 +62,22 @@ Namespace `soli_tv/v1`:
 
 | Route            | Method | Capability   | Notes                                     |
 |------------------|--------|--------------|-------------------------------------------|
-| `/messages`      | GET    | public       | Current messages. 204 when empty.         |
-| `/message/{id}`  | GET    | public       | Single message. 204 when not found.       |
+| `/messages`      | GET    | public       | Messages whose window covers now. 204 when empty. |
+| `/message/{id}`  | GET    | public       | Single message object. 204 when not found. |
 | `/message[/{id}]`| POST   | `edit_posts` | Creates or updates. 400 on invalid body.  |
+
+Accepted `status` values live in `SOLI_TV_MESSAGE_STATUSES`: `PLANNED` (the column default),
+`draft`, `published`, `archived`. `PLANNED` is in the list so a row created by a direct insert can
+be saved again through the API.
+
+Writes go through `wpdb::insert()`/`wpdb::update()` with an explicit format per column, not
+hand-built SQL, because `wpdb::prepare()` renders a null bound to `%s` as `''` - measured, that
+stored a missing `img` as `0` rather than `NULL`. `e2e/message-persistence.spec.js` asserts this
+and was confirmed to fail against the old statement.
+
+Dates cross the wire as MySQL `DATETIME` literals in site-local time (`toMysqlDateTime()` in
+`tv-message-provider.js`). A `Date` serialized to JSON is ISO-8601 with `T`/`Z`, which MySQL will
+not accept for a `DATETIME` column.
 
 The GET routes are deliberately public — the TV display polls them without a session.
 
@@ -128,4 +141,6 @@ built `build/` directory must exist before packaging, so `npm run publish` build
 
 - `blocks/settings.php` is entirely commented-out boilerplate copied from the featured-image
   plugin, still `require_once`d by `blocks/block.php`.
+- Nothing in the editor sets `status` yet; the provider defaults a new message to `draft`, so
+  `published` and `archived` are reachable only over the API.
 - No migration runner; schema changes currently only reach fresh activations.

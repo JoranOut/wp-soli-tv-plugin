@@ -139,6 +139,50 @@ async function loginAsAdmin( page ) {
 }
 
 /**
+ * Runs PHP inside the tests environment and returns its stdout.
+ *
+ * The write path needs an authenticated caller, and over `?rest_route=` cookie
+ * auth additionally needs an `X-WP-Nonce` read out of wp-admin - which this
+ * suite already found to race under parallel load (see `seedTvBlockPage()`).
+ * `wp eval` sidesteps both: it runs in-process, so `wp_set_current_user()` is
+ * enough to satisfy a capability check and `rest_do_request()` exercises the
+ * real route, handler and validation without any HTTP or nonce involved.
+ *
+ * @param {string} php PHP to execute. Echo exactly what the test asserts on.
+ * @return {string} Trimmed stdout.
+ */
+function wpEval( php ) {
+	return execFileSync(
+		'npx',
+		[ 'wp-env', 'run', 'tests-cli', '--', 'wp', 'eval', php ],
+		{ cwd: path.join( __dirname, '..' ), encoding: 'utf8' }
+	).trim();
+}
+
+/**
+ * Runs PHP as the administrator and returns the decoded JSON it echoes.
+ *
+ * @param {string} php PHP whose last statement echoes JSON.
+ * @return {any} Parsed value.
+ */
+function wpEvalJson( php ) {
+	const out = wpEval( 'wp_set_current_user( 1 ); ' + php );
+
+	// wp-env prefixes its own container chatter on some runs; the payload is
+	// the last line, and a bare non-JSON line should fail loudly rather than
+	// silently become undefined.
+	const last = out.split( /\r?\n/ ).filter( ( l ) => l.trim() ).pop();
+
+	try {
+		return JSON.parse( last );
+	} catch ( e ) {
+		throw new Error(
+			'Expected JSON from wp eval, got:\n' + out
+		);
+	}
+}
+
+/**
  * Creates a published page whose content is a single soli/tv-settings block.
  *
  * This is the plugin's only front-end PHP surface: the block's `render_callback`
@@ -197,6 +241,8 @@ module.exports = {
 	FATAL_ERROR_PATTERN,
 	PLUGIN_DIAGNOSTIC_PATTERN,
 	restUrl,
+	wpEval,
+	wpEvalJson,
 	loginAsAdmin,
 	seedTvBlockPage,
 	expectNoPhpDiagnostics,
