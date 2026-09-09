@@ -16,6 +16,7 @@ namespace Soli\TV;
 if (!defined('ABSPATH')) exit; // Exit if accessed directly
 
 require_once 'updater.php';
+require_once 'lib/post_type.php';
 require_once 'lib/tv_message_table.php';
 require_once 'lib/tv_message_endpoints.php';
 require_once 'blocks/block.php';

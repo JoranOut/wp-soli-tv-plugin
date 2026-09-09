@@ -17,6 +17,7 @@ The plugin owns two things:
 ```
 soli-tv-plugin.php          Bootstrap: constants, activation, textdomain, GitHub updater
 ├── lib/
+│   ├── post_type.php              soli_tv_message CPT + registered meta (nothing reads it yet)
 │   ├── tv_message_table.php       TVMessageTableHandler - schema + queries
 │   └── tv_message_endpoints.php   soli_tv/v1 REST routes
 ├── blocks/
@@ -60,6 +61,38 @@ One table, `{prefix}tv_message`, created via `dbDelta()` on activation:
 
 There is no migration runner yet. Adding one means following the `soli_tv_db_version` pattern in
 the root `CLAUDE.md`; `uninstall.php` already cleans that option up.
+
+## The soli_tv_message post type
+
+Step 2 of `PLAN-cpt-and-kiosk-route.md`, registered in `lib/post_type.php`. **Nothing reads it
+yet** — the slideshow still runs off `{prefix}tv_message` and `soli_tv/v1`. It exists so the
+migration lands on a type whose schema is already enforced.
+
+| Meta key | Type | Schema |
+|----------|------|--------|
+| `_soli_tv_layout` | string | enum `img_only`/`img_text`/`text_only`, default `img_text` |
+| `_soli_tv_fit` | string | enum `cover`/`contain`, default `cover` |
+| `_soli_tv_start` | string | `format: date-time` |
+| `_soli_tv_end` | string | `format: date-time` |
+| `_soli_tv_link` | string | `format: uri` |
+| `_soli_tv_disabled` | boolean | default `false`, registered on `soli_tv_message` **and** `soli_event` |
+
+Three things about this are not obvious, each measured on 2026-09-09 and each covered by
+`e2e/post-type.spec.js`:
+
+**`custom-fields` is required in `supports`.** `WP_REST_Posts_Controller` only adds the `meta`
+field to a post type that declares it. Without it the response carries no `meta` key at all —
+no error, just silence — and the editor can neither read nor write any registered meta.
+
+**Only the enum fields carry a `default`.** WordPress validates a default against the whole
+schema, `format` included, so `'default' => ''` on a `date-time` or `uri` field raises
+`register_meta was called incorrectly`. That notice prints before headers, which blocks the login
+cookie and locks you out of wp-admin with "Cookies are blocked due to unexpected output" — a
+schema slip in meta registration takes down login in any environment with `WP_DEBUG_DISPLAY` on.
+
+**The `auth_callback` is load-bearing but cannot be stricter than the post.** Returning false
+blocks an administrator's write. It cannot deny anyone the post capability already allows, because
+`edit_post_meta` maps through `edit_post` first.
 
 ## REST API
 
