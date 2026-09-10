@@ -26,8 +26,12 @@ e2e/**
 test-results/**
 playwright-report/**
 
-# Documentation (dev only)
+# Documentation (dev only). README.md ships: publish.js reads the plugin name
+# and version out of it, and the updater reads the version from it too.
 CLAUDE.md
+PLAN-*.md
+.wp-env.override.json
+.wp-env.override.json.example
 
 # GitHub
 .github/**

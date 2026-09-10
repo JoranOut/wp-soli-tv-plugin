@@ -14,12 +14,14 @@ Plugin for wordpress dedicated to automated TV display [soli.nl/TV](https://www.
      Kept in a comment because a single tilde renders as strikethrough on GitHub;
      the badges above are the human-readable version. Do not reformat.
 ~Plugin Name: wp-soli-tv-plugin~
-~Current Version: 0.1.0~
+~Current Version: 1.0.0~
 -->
 
 Contains:
-- Settings for the automation
-- A template for the TV page
+- `soli_tv_message` posts: a slide's layout, image fit, active window and QR link
+- `Tv berichten` -> `Instellingen`: which slides are on, and how long each is shown
+- `/tv/`: the screen itself, served without the theme
+- `wp soli-tv migrate`: moves messages off the legacy table and the old `tv` post type
 
 # Development
 

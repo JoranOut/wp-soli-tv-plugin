@@ -39,7 +39,7 @@ function soli_tv_enqueue_message_panel() {
             \_doing_it_wrong(
                 __FUNCTION__,
                 'blocks/tv-settings/build/message-panel.js is missing. Run `npm run build`.',
-                '0.1.0'
+                '1.0.0'
             );
         }
         return;

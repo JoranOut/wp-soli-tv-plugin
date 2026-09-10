@@ -1,6 +1,6 @@
 {
   "name": "wp-soli-tv-plugin",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "WordPress plugin driving the automated TV display for Muziekvereniging Soli",
   "author": "Muziekvereniging Soli",
   "license": "GPL-2.0-or-later",

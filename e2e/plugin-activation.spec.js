@@ -1,5 +1,10 @@
 const { test, expect } = require( '@playwright/test' );
 
+// Read rather than hardcoded: this assertion is that the plugin reports the
+// version we ship, and a literal here turns every release into a failing test.
+// It broke on exactly that when 0.1.0 became 1.0.0.
+const { version } = require( '../package.json' );
+
 /**
  * These specs run with the administrator session captured by auth.setup.js.
  */
@@ -13,7 +18,12 @@ test.describe( 'Plugin activation', () => {
 			'tr[data-plugin="wp-soli-tv-plugin/soli-tv-plugin.php"]'
 		);
 		await expect( row ).toBeVisible();
-		await expect( row ).toContainText( '0.1.0' );
+
+		// The version lives in its own cell alongside the author, so this
+		// targets that rather than the whole row.
+		await expect(
+			row.locator( '.plugin-version-author-uri' )
+		).toContainText( version );
 
 		// An active plugin renders a Deactivate action; an inactive one renders
 		// Activate. This is the load-bearing assertion - if the plugin fataled
