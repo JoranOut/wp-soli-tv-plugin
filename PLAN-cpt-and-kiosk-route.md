@@ -1,6 +1,7 @@
 # Plan: move TV messages to a CPT, render the screen off-page
 
-Status: proposal, not started. Written 2026-09-09 against `soli-tv-plugin` 0.1.0.
+Status: steps 1 to 7 done and shipped in 1.0.0; step 8 deliberately not built (see below).
+Written 2026-09-09 against 0.1.0.
 
 Three changes, in this order:
 

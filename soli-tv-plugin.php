@@ -5,7 +5,7 @@ namespace Soli\TV;
 /*
   Plugin Name: Soli TV Plugin
   Description: Drives the automated TV display for Muziekvereniging Soli.
-  Version: 0.1.0
+  Version: 1.0.0
   Author: Joran Out
   License: GPL-2.0-or-later
   License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,7 @@ require_once 'lib/kiosk.php';
 
 define('SOLI_TV__PLUGIN_DIR_PATH', plugin_dir_path(__FILE__));
 define('SOLI_TV__PLUGIN_DIR_URL', plugin_dir_url(__FILE__));
-define('SOLI_TV__PLUGIN_VERSION', "0.1.0");
+define('SOLI_TV__PLUGIN_VERSION', "1.0.0");
 
 add_action('init', 'Soli\TV\loadTextdomain');
 function loadTextdomain() {
