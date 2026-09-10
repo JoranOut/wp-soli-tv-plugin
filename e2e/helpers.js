@@ -196,6 +196,11 @@ function wpEvalJson( php ) {
  *
  * With plain permalinks the page is reachable at `?page_id=`.
  *
+ * Delete it with `deleteTvBlockPage()` in an afterAll. Left behind, one page
+ * accumulates per spec run: 148 of them had piled up in the local environment
+ * by 2026-09-10, and `wp soli-tv migrate` reports every page carrying the
+ * block, so the litter turned the migration's output unreadable.
+ *
  * @return {{id: number, link: string}} The created page.
  */
 function seedTvBlockPage() {
@@ -234,6 +239,33 @@ function seedTvBlockPage() {
 	return { id, link: `/?page_id=${ id }` };
 }
 
+/**
+ * Removes a page created by `seedTvBlockPage()`.
+ *
+ * @param {{id: number}|undefined} fixture
+ */
+function deleteTvBlockPage( fixture ) {
+	if ( ! fixture || ! fixture.id ) {
+		return;
+	}
+
+	execFileSync(
+		'npx',
+		[
+			'wp-env',
+			'run',
+			'tests-cli',
+			'--',
+			'wp',
+			'post',
+			'delete',
+			String( fixture.id ),
+			'--force',
+		],
+		{ cwd: path.join( __dirname, '..' ), encoding: 'utf8' }
+	);
+}
+
 module.exports = {
 	ADMIN_USER,
 	ADMIN_PASSWORD,
@@ -245,5 +277,6 @@ module.exports = {
 	wpEvalJson,
 	loginAsAdmin,
 	seedTvBlockPage,
+	deleteTvBlockPage,
 	expectNoPhpDiagnostics,
 };

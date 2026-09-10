@@ -2,6 +2,7 @@ const { test, expect } = require( '@playwright/test' );
 const {
 	expectNoPhpDiagnostics,
 	seedTvBlockPage,
+	deleteTvBlockPage,
 	restUrl,
 	FATAL_ERROR_PATTERN,
 	PLUGIN_DIAGNOSTIC_PATTERN,
@@ -26,6 +27,10 @@ let fixture;
 
 test.beforeAll( () => {
 	fixture = seedTvBlockPage();
+} );
+
+test.afterAll( () => {
+	deleteTvBlockPage( fixture );
 } );
 
 test.describe( 'renders without PHP diagnostics', () => {
