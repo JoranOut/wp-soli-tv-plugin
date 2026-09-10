@@ -179,6 +179,10 @@ changes. Bump it whenever the rule changes.
 No `wp_head()`, no theme template, no admin bar, no emoji script. `e2e/kiosk.spec.js` asserts the
 absence of each, because that absence is the reason the route exists.
 
+It caps the size of the document **minus its payload**, currently around 1,900 bytes. Capping the
+whole document conflated "no theme" with "little content": with 65 messages the payload alone took
+it past 20 KB and the assertion failed on a healthy site.
+
 The slides are printed into the document as one JSON payload, so the first paint waits on nothing
 and a failed refresh leaves the screen showing what it has. The refresh re-reads `/tv/` itself
 rather than an endpoint, so one code path produces the slides.
