@@ -73,20 +73,28 @@ migration lands on a type whose schema is already enforced.
 |----------|------|--------|
 | `_soli_tv_layout` | string | enum `img_only`/`img_text`/`text_only`, default `img_text` |
 | `_soli_tv_fit` | string | enum `cover`/`contain`, default `cover` |
-| `_soli_tv_start` | string | `format: date-time` |
-| `_soli_tv_end` | string | `format: date-time` |
-| `_soli_tv_link` | string | `format: uri` |
+| `_soli_tv_start` | string | `pattern` (empty, or `YYYY-MM-DDTHH:mm(:ss)`), default `''` |
+| `_soli_tv_end` | string | same pattern, default `''` |
+| `_soli_tv_link` | string | `format: uri`, default `''` |
 | `_soli_tv_disabled` | boolean | default `false`, registered on `soli_tv_message` **and** `soli_event` |
 
-Three things about this are not obvious, each measured on 2026-09-09 and each covered by
-`e2e/post-type.spec.js`:
+Four things about this are not obvious, each measured and each covered by `e2e/post-type.spec.js`:
+
+**The window bounds use a `pattern`, not `format: date-time`.** That format rejects `''` with
+"Invalid date." and `null` with "not of type string". The editor sends every registered key on
+every save, so a message that left a bound blank could not be saved at all — the whole request
+answered 400 and no field in the panel could be edited. A pattern accepts `''`, accepts both
+precisions (the editor emits minutes, the migration writes seconds) and still rejects garbage.
+Declaring `default => ''` alongside it is what makes a blank bound read back as `''` rather than
+`null`, which the schema would refuse on the next save. `format: uri` does accept `''`, so the
+link needs no pattern.
 
 **`custom-fields` is required in `supports`.** `WP_REST_Posts_Controller` only adds the `meta`
 field to a post type that declares it. Without it the response carries no `meta` key at all —
 no error, just silence — and the editor can neither read nor write any registered meta.
 
-**Only the enum fields carry a `default`.** WordPress validates a default against the whole
-schema, `format` included, so `'default' => ''` on a `date-time` or `uri` field raises
+**A default is only declared where the schema accepts it.** WordPress validates the default
+against the whole schema, so `'default' => ''` under `format: date-time` raises
 `register_meta was called incorrectly`. That notice prints before headers, which blocks the login
 cookie and locks you out of wp-admin with "Cookies are blocked due to unexpected output" — a
 schema slip in meta registration takes down login in any environment with `WP_DEBUG_DISPLAY` on.
@@ -94,6 +102,38 @@ schema slip in meta registration takes down login in any environment with `WP_DE
 **The `auth_callback` is load-bearing but cannot be stricter than the post.** Returning false
 blocks an administrator's write. It cannot deny anyone the post capability already allows, because
 `edit_post_meta` maps through `edit_post` first.
+
+## The message sidebar panel
+
+`blocks/tv-settings/src/message-panel.js`, enqueued by `lib/message_panel.php`. Step 4 of
+`PLAN-cpt-and-kiosk-route.md`: layout, fit, window, QR link and the disabled flag, on the
+`soli_tv_message` editor screen only.
+
+`enqueue_block_editor_assets` fires for every editor, so the PHP checks
+`get_current_screen()->post_type` and the component checks `getCurrentPostType()` as well — the
+second check is the one that still holds if something else enqueues the handle.
+
+The window uses native `datetime-local` inputs rather than core's `DateTimePicker`. Neither costs
+bundle weight (`wp-components` is already loaded), but the native input emits exactly the string
+the schema accepts, needs no timezone reasoning, and stays compact where `DateTimePicker` renders
+a full inline calendar. Control spacing is an explicit grid `gap`: these controls carry no bottom
+margin in the document sidebar, and unspaced the help text of one ran into the label of the next.
+
+### Driving the editor from a test
+
+Three things cost time here, all measured 2026-09-10:
+
+- **`waitUntil: 'networkidle'` never resolves** in the editor — it keeps connections open, so the
+  navigation times out on a page that is perfectly usable. Use `domcontentloaded`.
+- **`Ctrl+S` does not reach the editor from a sidebar input.** It fired no REST request at all.
+  Click the save control instead.
+- **The save control is two different elements.** While the post is clean the header holds
+  `.editor-post-saved-state` reading "Saved"; once dirty, that element is *replaced* by a
+  "Save draft" button. Asserting that `.editor-post-saved-state` is visible proves nothing, since
+  it is visible in the clean state — wait for its text.
+
+`PluginDocumentSettingPanel` also renders collapsed, so its controls are absent from the DOM until
+the panel's toggle is clicked.
 
 ## Migration
 

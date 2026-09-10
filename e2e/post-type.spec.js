@@ -140,6 +140,35 @@ test.describe( 'the soli_tv_message post type', () => {
 		expect( response.status ).toBe( 400 );
 	} );
 
+	test( 'accepts a message whose window is left blank', async () => {
+		// The window bounds use a pattern rather than `format: date-time`
+		// precisely for this: that format rejects '' with "Invalid date." and
+		// null with "not of type string". The editor sends every registered
+		// key on every save, so with the format in place saving any message
+		// that left a bound blank failed with a 400 - no field could be edited
+		// at all. Nothing caught it here because every other assertion in this
+		// file sends a value.
+		const response = createMessage( {
+			title: 'blank-window',
+			meta: { _soli_tv_start: '', _soli_tv_end: '' },
+		} );
+
+		expect( response.status ).toBe( 201 );
+		expect( response.data.meta._soli_tv_start ).toBe( '' );
+		expect( response.data.meta._soli_tv_end ).toBe( '' );
+	} );
+
+	test( 'reads a blank window back as a string, never null', async () => {
+		// null is what the editor would send back on the next save, and the
+		// schema refuses it. A declared default of '' is what keeps that from
+		// happening.
+		const response = createMessage( { title: 'no-window-meta' } );
+
+		expect( response.data.meta._soli_tv_start ).toBe( '' );
+		expect( response.data.meta._soli_tv_end ).toBe( '' );
+		expect( response.data.meta._soli_tv_link ).toBe( '' );
+	} );
+
 	test( 'rejects a window bound that is not a date-time', async () => {
 		const response = createMessage( {
 			title: 'bad-date',
@@ -147,7 +176,8 @@ test.describe( 'the soli_tv_message post type', () => {
 		} );
 
 		// The ISO-8601-into-DATETIME defect came from dates crossing the wire
-		// unchecked. format: date-time is what closes that off.
+		// unchecked. The pattern is what closes that off while still allowing
+		// a blank window.
 		expect( response.status ).toBe( 400 );
 	} );
 
