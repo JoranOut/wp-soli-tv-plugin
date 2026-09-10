@@ -24,6 +24,21 @@ const LAYOUTS = array('img_only', 'img_text', 'text_only');
 /** How the image fills its half of the slide. */
 const FITS = array('cover', 'contain');
 
+/**
+ * Accepted shape of a window bound: empty, or a local date-time.
+ *
+ * A pattern rather than `format: date-time`, because that format rejects an
+ * empty string ("Invalid date.") and a null ("not of type string"). A message
+ * is allowed to have no window, and the editor sends every registered key on
+ * every save - so with the format in place, saving any message that left a
+ * bound blank failed with a 400 and no field could be edited at all. Measured
+ * 2026-09-10 against `rest_validate_value_from_schema()`.
+ *
+ * Both precisions are allowed: the editor's datetime-local input emits minutes,
+ * the migration writes seconds.
+ */
+const WINDOW_PATTERN = '^$|^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?$';
+
 add_action('init', 'Soli\TV\soli_tv_register_post_type', 5);
 add_action('init', 'Soli\TV\soli_tv_register_meta', 6);
 
@@ -100,18 +115,23 @@ function soli_tv_register_meta() {
             'description' => __('Whether the image covers or fits inside its area', 'soli-tv'),
         ),
         '_soli_tv_start' => array(
-            'type'   => 'string',
-            'format' => 'date-time',
+            'type'    => 'string',
+            'default' => '',
+            'pattern' => WINDOW_PATTERN,
             'description' => __('Start of the window in which the slide shows', 'soli-tv'),
         ),
         '_soli_tv_end' => array(
-            'type'   => 'string',
-            'format' => 'date-time',
+            'type'    => 'string',
+            'default' => '',
+            'pattern' => WINDOW_PATTERN,
             'description' => __('End of the window in which the slide shows', 'soli-tv'),
         ),
         '_soli_tv_link' => array(
-            'type'   => 'string',
-            'format' => 'uri',
+            'type'    => 'string',
+            // `format: uri` does accept an empty string, so unlike the window
+            // bounds this one needs no pattern and can carry a default.
+            'default' => '',
+            'format'  => 'uri',
             'description' => __('URL encoded into the slide QR code', 'soli-tv'),
         ),
     );
@@ -127,6 +147,10 @@ function soli_tv_register_meta() {
             $schema['format'] = $field['format'];
         }
 
+        if (isset($field['pattern'])) {
+            $schema['pattern'] = $field['pattern'];
+        }
+
         $args = array(
             'single'            => true,
             'type'              => $field['type'],
@@ -136,13 +160,14 @@ function soli_tv_register_meta() {
             'show_in_rest'      => array('schema' => $schema),
         );
 
-        // Only the enum fields carry a default. WordPress validates a default
-        // against the whole schema, `format` included, so declaring `''` for a
-        // `date-time` or `uri` field raises "the data must match the type
-        // provided" - and that notice prints before headers, which blocks the
-        // login cookie and locks you out of wp-admin entirely. Absent meta
-        // already reads back as '' for single string meta, so there is nothing
-        // to gain from a default here.
+        // A default is only declared where the schema actually accepts it.
+        // WordPress validates the default against the whole schema, so `''`
+        // under `format: date-time` raises "the data must match the type
+        // provided" - and that notice prints before headers, blocking the
+        // login cookie and locking you out of wp-admin. That is why the window
+        // bounds use a pattern that permits `''`: with a default in place they
+        // read back as `''` rather than `null`, and the editor's save no longer
+        // sends a null the schema refuses.
         if (isset($field['default'])) {
             $args['default'] = $field['default'];
         }
