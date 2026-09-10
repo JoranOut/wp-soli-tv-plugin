@@ -2,6 +2,7 @@ import './single-tv-slide.scss';
 import { useMemo, RawHTML, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import defaultBackground from '../../assets/img/default_background.jpg';
+import { imageUrl as slideImageUrl } from '../utils/slide-image';
 
 export default function SingleTVSlide({slide, isActive}) {
     const showImage = slide.type === 'img_only' || slide.type === 'img_text';
@@ -18,9 +19,8 @@ export default function SingleTVSlide({slide, isActive}) {
             className={`soli-tv-block-single-slide ${slide.slide_type} ${slide.type} ${isActive ? 'is-active' : 'is-inactive'}`}
         >
             {showImage && (
-                slide.img ? <img className="content-image" src={`/?attachment_id=${slide.img}`}/>
-                    : <img className="content-image" src={defaultBackground}/>)
-            }
+                <img className="content-image" src={slideImageUrl(slide)} alt=""/>
+            )}
             {slide.content && showContent &&
                 <div className="content">
                     <h2>{slide.title}</h2>

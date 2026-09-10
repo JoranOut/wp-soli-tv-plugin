@@ -197,10 +197,11 @@ Around 55 KB wraps a slideshow that uses none of it. On the Pi the parse and pai
 
 - A `soli_tv` query var, handled on `template_redirect`: emit the document, `exit`. No
   `wp_head()`, no `wp_footer()`, no theme template, no admin bar, no emoji script, no oEmbed.
-- Register a rewrite for `/tv`, and treat `?soli_tv=1` as canonical. `CLAUDE.md` records why:
-  wp-env installs plain permalinks, `/scanner/{slug}` 404ed at Apache in
-  `wp-soli-ticket-scanner-plugin`, and the tests passed for the wrong reason. The query var works
-  either way.
+- The URL is `/tv/`, always, and `/tv` redirects to it. This overrides the earlier note in this
+  plan that made `?soli_tv=1` canonical: the query var is only the rewrite target. `/tv/` needs
+  pretty permalinks, because with the plain structure it 404s at Apache before WordPress runs —
+  the same trap that made `/scanner/{slug}` fail in `wp-soli-ticket-scanner-plugin`. `.wp-env.json`
+  therefore sets a permalink structure on start, so the tests exercise the real URL.
 - Inline the slide payload as one `wp_json_encode()` blob instead of fetching at boot. The screen
   paints without waiting on REST, then polls for changes.
 - Separate webpack entries: `admin` for the two screens, `tv` for the kiosk, so editor-only code
@@ -266,7 +267,9 @@ way `e2e/message-persistence.spec.js` was proved on 2026-09-08.
    that event, where the block could disable one date and not another.
 6. Delete the block registration, `lib/tv_message_table.php`, `lib/tv_message_endpoints.php` and
    the table.
-7. Add the kiosk route and its own entry point.
+7. Add the kiosk route and its own entry point. **Done 2026-09-10, before step 6.** The order is
+   inverted deliberately: the route is additive, so it can land and be verified while the block
+   still works. Deleting the block first would leave a release with no screen at all.
 8. Cache the rendered document, invalidated on `save_post`.
 
 Steps 1 to 6 are one release, and a major one: the block goes away and any page holding it stops

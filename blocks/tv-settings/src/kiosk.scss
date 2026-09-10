@@ -1,0 +1,38 @@
+// The kiosk document carries no theme and no global styles, so everything the
+// screen needs is here or in the slide components' own stylesheets.
+@import "./slides/slide-show";
+@import "./slides/single-tv-slide";
+@import "./slides/single-event-slide";
+@import "./slides/qr-wrapper";
+
+body.soli-tv-kiosk {
+	background: #fff;
+	color: #000;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	margin: 0;
+	overflow: hidden;
+}
+
+.soli-tv-kiosk__empty {
+	align-items: center;
+	display: flex;
+	height: 100vh;
+	justify-content: center;
+	width: 100vw;
+}
+
+.soli-tv-kiosk__notes {
+	animation: soli-tv-bounce 1.2s ease-in-out infinite;
+	font-size: 4rem;
+	letter-spacing: 0.3em;
+}
+
+@keyframes soli-tv-bounce {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-12px);
+	}
+}
