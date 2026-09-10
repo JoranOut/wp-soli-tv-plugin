@@ -18,6 +18,7 @@ The plugin owns two things:
 soli-tv-plugin.php          Bootstrap: constants, activation, textdomain, GitHub updater
 ├── lib/
 │   ├── post_type.php              soli_tv_message CPT + registered meta (nothing reads it yet)
+│   ├── migrate.php                wp soli-tv migrate - WP-CLI only
 │   ├── tv_message_table.php       TVMessageTableHandler - schema + queries
 │   └── tv_message_endpoints.php   soli_tv/v1 REST routes
 ├── blocks/
@@ -94,6 +95,41 @@ schema slip in meta registration takes down login in any environment with `WP_DE
 blocks an administrator's write. It cannot deny anyone the post capability already allows, because
 `edit_post_meta` maps through `edit_post` first.
 
+## Migration
+
+`wp soli-tv migrate [--dry-run]` (`lib/migrate.php`), step 3 of
+`PLAN-cpt-and-kiosk-route.md`. Registered only under WP-CLI: a data migration on `admin_init`
+would run mid-request with no way to preview it. Three sources, each idempotent:
+
+| Source | Becomes | Idempotent because |
+|--------|---------|--------------------|
+| `{prefix}tv_message` rows | new posts | the row id is stored as `_soli_tv_migrated_from` |
+| legacy `tv` posts | converted in place | nothing of type `tv` is left afterwards |
+| `soli/tv-settings` attributes | item meta + `soli_tv_settings` option | writing the same values again changes nothing |
+
+Legacy posts are converted rather than copied, so ids, revisions and featured images survive.
+Legacy `tv` is only a registered type while `wp-theme-soli` is active, so the query goes straight
+at `$wpdb->posts` — `WP_Query` filters unregistered types out.
+
+Dates move by substituting `T` for the space, never through `strtotime()`/`gmdate()`. The stored
+value is already the wall-clock time the window means; reinterpreting it in PHP's timezone (UTC
+inside WordPress) shifts every window by the site's offset.
+
+Page content is never rewritten. The command reports which pages still carry the block so a person
+decides when it comes out.
+
+`e2e/migrate.spec.js` is the upgrade test. Two things about it:
+
+**Assertions are spec-owned, never on the totals.** The migration is global and Playwright runs
+spec files in parallel, so another spec's `tv_message` rows appear in the same report; a
+`1 moved` assertion races them.
+
+**Orphan meta has to be cleared in cleanup.** Meta for a post that does not exist survives
+deleting posts, and the guard test asserts that exact row is absent — so one failing run otherwise
+leaves residue that makes the next run fail for the previous run's reason. Measured while proving
+the guard: disabling it wrote `_soli_tv_disabled` against a deleted event id, which then broke the
+following proof.
+
 ## REST API
 
 Namespace `soli_tv/v1`:
@@ -137,6 +173,10 @@ future, so a started environment is immediately usable — without it WordPress 
 the admin-email interstitial and redirects wp-admin to `upgrade.php`.
 
 ### Tests
+
+`seedTvBlockPage()` must be paired with `deleteTvBlockPage()` in an `afterAll`. Unpaired it leaks
+one page per run: 148 had accumulated locally by 2026-09-10, and since `wp soli-tv migrate` reports
+every page carrying the block, the litter made its output unreadable.
 
 `e2e/auth.setup.js` logs in once and stores the session in `e2e/.auth/admin.json`; the chromium
 project depends on it. Logging in per test raced and produced intermittent redirects back to
