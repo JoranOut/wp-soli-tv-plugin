@@ -21,6 +21,7 @@ soli-tv-plugin.php          Bootstrap: constants, activation, textdomain, GitHub
 │   ├── migrate.php                wp soli-tv migrate - WP-CLI only
 │   ├── message_panel.php          Enqueues the editor sidebar panel
 │   ├── settings_page.php          Tv berichten -> Instellingen, soli_tv_settings option
+│   ├── kiosk.php                  /tv/ - the screen, payload printed into the document
 │   ├── tv_message_table.php       TVMessageTableHandler - schema + queries
 │   └── tv_message_endpoints.php   soli_tv/v1 REST routes
 ├── blocks/
@@ -150,6 +151,59 @@ Set the preference in `beforeAll` rather than clicking the modal away, and write
 and `core/edit-post` scopes since the key has moved between them and this suite runs two WordPress
 versions. Reproduce a fresh user with
 `wp eval 'delete_user_meta( 1, "wp_persisted_preferences" );'` before trusting an editor spec.
+
+## The screen at /tv/
+
+`lib/kiosk.php`, rendered by `blocks/tv-settings/src/kiosk.js`. Step 7 of
+`PLAN-cpt-and-kiosk-route.md`.
+
+**The URL is always `/tv/`.** `/tv` answers 301 to it. The `soli_tv` query var exists only as the
+rewrite target and is not a second address.
+
+That requires pretty permalinks: with the plain structure `/tv/` 404s **at Apache**, before
+WordPress runs, so `.wp-env.json` now sets `/%postname%/` on start in both environments. Nothing
+in the plugin can work around it — the request never reaches PHP.
+
+A rule added on `init` does nothing until the rules are rebuilt, and an activation hook does not
+fire on a plugin update, so `soli_tv_rewrite_version` is stored and one flush happens when it
+changes. Bump it whenever the rule changes.
+
+### What the document is, and is not
+
+| | page carrying the block | `/tv/` |
+|---|---|---|
+| HTML | 97,518 bytes | ~3,700 |
+| inline CSS | 38,992 (18 KB `global-styles`) | none |
+| theme chrome | 39,979 | none |
+
+No `wp_head()`, no theme template, no admin bar, no emoji script. `e2e/kiosk.spec.js` asserts the
+absence of each, because that absence is the reason the route exists.
+
+The slides are printed into the document as one JSON payload, so the first paint waits on nothing
+and a failed refresh leaves the screen showing what it has. The refresh re-reads `/tv/` itself
+rather than an endpoint, so one code path produces the slides.
+
+**Scripts must be registered, not hand-written.** The bundle keeps `wp-element` and `wp-i18n` as
+externals, so a bare `<script src>` loaded it with no dependencies and it died on
+`Cannot read properties of undefined (reading 'element')`. `wp_scripts()->do_items( 'soli-tv-kiosk' )`
+prints the handle and its dependency chain and nothing else — unlike `wp_print_footer_scripts()`,
+which would also print whatever every other plugin queued for a page this document is not.
+
+### An absent window means "always on"
+
+The message query cannot compare `_soli_tv_start` alone: a message with no window has no meta row,
+and a plain comparison drops it. Each bound is an OR of `NOT EXISTS`, empty, and the comparison.
+The value compared is `T`-separated, matching how the meta is stored — it is a string comparison
+in SQL, and `2026-09-10T19:00:00` sorts differently from `2026-09-10 19:00:00` around the
+separator.
+
+### Images were never rendering
+
+The slides built `/?attachment_id=${slide.img}`, which answers **301 to a `text/html` attachment
+page** — measured 2026-09-10 — so every slide with a featured image showed a broken one. The
+payload carries `imgUrl` from `wp_get_attachment_image_url()` and
+`blocks/tv-settings/src/utils/slide-image.js` prefers it, falling back to the old behaviour for
+the block's front end until that goes.
 
 ## The Instellingen screen
 

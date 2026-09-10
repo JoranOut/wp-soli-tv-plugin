@@ -5,7 +5,7 @@
   ],
   "port": 8898,
   "lifecycleScripts": {
-    "afterStart": "wp-env run tests-cli -- wp core update-db --quiet && wp-env run cli -- wp core update-db --quiet && wp-env run tests-cli -- wp option update admin_email_lifespan 4102444800 --quiet && wp-env run cli -- wp option update admin_email_lifespan 4102444800 --quiet"
+    "afterStart": "wp-env run tests-cli -- wp core update-db --quiet && wp-env run cli -- wp core update-db --quiet && wp-env run tests-cli -- wp option update admin_email_lifespan 4102444800 --quiet && wp-env run cli -- wp option update admin_email_lifespan 4102444800 --quiet && wp-env run cli -- wp rewrite structure '/%postname%/' --hard --quiet && wp-env run tests-cli -- wp rewrite structure '/%postname%/' --hard --quiet"
   },
   "config": {
     "WP_DEBUG": true,

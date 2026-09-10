@@ -4,6 +4,7 @@ import { __ } from '@wordpress/i18n';
 import {SlidesContext} from "../providers/slides-provider";
 import SelectedDate from "../selected-date/selected-date";
 import defaultBackground from '../../assets/img/default_background.jpg';
+import { imageUrl as slideImageUrl } from '../utils/slide-image';
 
 export default function SingleEventSlide({slide, isActive}) {
     const {getEnabledEvents} = useContext(SlidesContext);
@@ -14,10 +15,7 @@ export default function SingleEventSlide({slide, isActive}) {
             <div
                 className="single-event"
             >
-                {(
-                    slide.img ? <img className="content-image" src={`/?attachment_id=${slide.img}`}/>
-                        : <img className="content-image" src={defaultBackground}/>)
-                }
+                <img className="content-image" src={slideImageUrl(slide)} alt=""/>
                 <div className="content">
                     <h2>{slide.title}</h2>
                     {slide.location && <p>Location: {slide.location}</p>}
