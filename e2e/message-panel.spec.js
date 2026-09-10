@@ -113,27 +113,32 @@ test.describe( 'the Tv bericht sidebar panel', () => {
 		const id = createMessage( 'fields' );
 		const panel = await openPanel( page, id );
 
-		await expect( panel.getByLabel( 'Layout' ) ).toBeVisible();
-		await expect(
-			panel.getByLabel( 'Afbeelding vullend of passend' )
-		).toBeVisible();
-		await expect( panel.getByLabel( 'Zichtbaar vanaf' ) ).toBeVisible();
-		await expect( panel.getByLabel( 'Zichtbaar tot' ) ).toBeVisible();
-		await expect( panel.getByLabel( 'URL voor QR-code' ) ).toBeVisible();
-		await expect( panel.getByLabel( 'Nu niet tonen' ) ).toBeVisible();
+		// Class hooks, not labels: the labels are translated and this suite runs
+		// against whichever locale the environment has. Selecting on Dutch copy
+		// passed only while en_US had no translations for it.
+		for ( const field of [
+			'layout',
+			'fit',
+			'start',
+			'end',
+			'link',
+			'disabled',
+		] ) {
+			await expect(
+				panel.locator( `.soli-tv-field--${ field }` )
+			).toBeVisible();
+		}
 	} );
 
 	test( 'hides the fit control for a text-only slide', async ( { page } ) => {
 		const id = createMessage( 'text-only' );
 		const panel = await openPanel( page, id );
 
-		await panel.getByLabel( 'Layout' ).selectOption( 'text_only' );
+		await panel.locator( '.soli-tv-field--layout select' ).selectOption( 'text_only' );
 
 		// A control that cannot apply is noise, so it goes rather than greying
 		// out.
-		await expect(
-			panel.getByLabel( 'Afbeelding vullend of passend' )
-		).toBeHidden();
+		await expect( panel.locator( '.soli-tv-field--fit' ) ).toBeHidden();
 	} );
 
 	test( 'saves what was set in the panel onto the post meta', async ( {
@@ -142,15 +147,15 @@ test.describe( 'the Tv bericht sidebar panel', () => {
 		const id = createMessage( 'roundtrip' );
 		const panel = await openPanel( page, id );
 
-		await panel.getByLabel( 'Layout' ).selectOption( 'img_only' );
-		await panel.getByLabel( 'Afbeelding vullend of passend' ).selectOption( 'contain' );
+		await panel.locator( '.soli-tv-field--layout select' ).selectOption( 'img_only' );
+		await panel.locator( '.soli-tv-field--fit select' ).selectOption( 'contain' );
 		await panel
-			.getByLabel( 'Zichtbaar vanaf' )
+			.locator( '.soli-tv-field--start input' )
 			.fill( '2026-04-01T09:30' );
 		await panel
-			.getByLabel( 'URL voor QR-code' )
+			.locator( '.soli-tv-field--link input' )
 			.fill( 'https://soli.nl/tv' );
-		await panel.getByLabel( 'Nu niet tonen' ).click();
+		await panel.locator( '.soli-tv-field--disabled input' ).click();
 
 		// Clicking the save-state button, not Ctrl+S: the shortcut does not
 		// reach the editor from a sidebar input, and measured on 2026-09-10 it
@@ -164,14 +169,19 @@ test.describe( 'the Tv bericht sidebar panel', () => {
 		// while the post is clean the header holds `.editor-post-saved-state`
 		// reading "Saved"; once it is dirty that element is *replaced* by a
 		// "Save draft" button. A selector for one is absent in the other.
-		const saveDraft = page.getByRole( 'button', { name: /Save draft/i } );
+		// `.editor-post-save-draft`, not the button's name: in nl_NL it reads
+		// "Concept opslaan", so a name-based selector only worked in English.
+		const saveDraft = page.locator( 'button.editor-post-save-draft' );
 		await expect( saveDraft ).toBeVisible( { timeout: 30000 } );
 		await saveDraft.click();
 
-		// Back to the clean state, which is the actual evidence of a save.
-		await expect(
-			page.locator( '.editor-post-saved-state' )
-		).toHaveText( /Saved/i, { timeout: 30000 } );
+		// Back to the clean state, which is the actual evidence of a save. The
+		// element's presence is the signal here rather than its text, which is
+		// "Opgeslagen" in Dutch and "Saved" in English.
+		await expect( page.locator( '.editor-post-saved-state' ) ).toBeVisible( {
+			timeout: 30000,
+		} );
+		await expect( saveDraft ).toHaveCount( 0 );
 
 		// Poll anyway: the REST save resolves before this reads the database
 		// through a separate wp-cli process.

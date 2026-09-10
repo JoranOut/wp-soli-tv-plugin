@@ -19,6 +19,7 @@ require_once 'updater.php';
 require_once 'lib/post_type.php';
 require_once 'lib/migrate.php';
 require_once 'lib/message_panel.php';
+require_once 'lib/settings_page.php';
 require_once 'lib/tv_message_table.php';
 require_once 'lib/tv_message_endpoints.php';
 require_once 'blocks/block.php';

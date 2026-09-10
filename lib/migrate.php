@@ -277,15 +277,22 @@ function soli_tv_migrate_block_attributes($dry_run, $row_to_post = array()) {
                             ? $row_to_post[(int) $id]
                             : soli_tv_find_migrated_post((int) $id);
                     } else {
-                        $target = (int) $id;
+                        // An event id in a block attribute is a row id from the
+                        // event plugin's `event_dates` table, not a post id -
+                        // `soli_event/v1` returns both as `id` and `post_id`,
+                        // and the block stored `id`. Treating it as a post id
+                        // wrote this plugin's meta onto whatever unrelated post
+                        // happened to carry that number.
+                        $target = soli_tv_event_post_for_date((int) $id);
                     }
 
                     if (!$target) {
                         \WP_CLI::warning(sprintf(
-                            'page %d turns %s %d off, but no migrated post was found for it',
+                            'page %d turns %s %d off, but nothing could be resolved for it%s',
                             $page->ID,
                             $key,
-                            $id
+                            $id,
+                            $key === 'events' ? ' (no event_dates row with that id)' : ''
                         ));
                         continue;
                     }
@@ -366,6 +373,29 @@ function soli_tv_migrate_block_attributes($dry_run, $row_to_post = array()) {
     }
 
     return $result;
+}
+
+/**
+ * The `soli_event` post a given event-date row belongs to, or 0.
+ *
+ * A post can own several date rows, so the flag written on the post covers
+ * every date of that event. The block could disable one date and not another;
+ * nothing in the new model can express that, which is a deliberate loss - see
+ * PLAN-cpt-and-kiosk-route.md.
+ */
+function soli_tv_event_post_for_date($date_id) {
+    global $wpdb;
+
+    $table = $wpdb->prefix . 'event_dates';
+
+    if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+        return 0;
+    }
+
+    return (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT post_id FROM {$table} WHERE id = %d",
+        $date_id
+    ));
 }
 
 /** The post a given tv_message row became, or 0. */

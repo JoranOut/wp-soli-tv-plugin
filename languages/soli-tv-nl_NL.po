@@ -12,30 +12,125 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: soli-tv\n"
 
-
-#. Plugin Name of the plugin
 #: soli-tv-plugin.php
 msgid "Soli TV Plugin"
 msgstr ""
 
-#. Description of the plugin
 #: soli-tv-plugin.php
 msgid "Drives the automated TV display for Muziekvereniging Soli."
 msgstr "Verzorgt het geautomatiseerde TV-scherm van Muziekvereniging Soli."
 
-#. Author of the plugin
 #: soli-tv-plugin.php
 msgid "Joran Out"
 msgstr ""
 
+#: lib/post_type.php:47
+#: lib/post_type.php:59
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:136
+msgid "Tv berichten"
+msgstr ""
+
+#: lib/post_type.php:48
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:55
+msgid "Tv bericht"
+msgstr ""
+
+#: lib/post_type.php:49
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:142
+msgid "Nieuw bericht"
+msgstr ""
+
+#: lib/post_type.php:50
+#: lib/post_type.php:52
+msgid "Nieuw tv bericht"
+msgstr ""
+
+#: lib/post_type.php:51
+msgid "Tv bericht bewerken"
+msgstr ""
+
+#: lib/post_type.php:53
+msgid "Tv bericht bekijken"
+msgstr ""
+
+#: lib/post_type.php:54
+msgid "Tv berichten bekijken"
+msgstr ""
+
+#: lib/post_type.php:55
+msgid "Tv berichten zoeken"
+msgstr ""
+
+#: lib/post_type.php:56
+msgid "Geen tv berichten gevonden"
+msgstr ""
+
+#: lib/post_type.php:57
+msgid "Geen tv berichten in de prullenbak"
+msgstr ""
+
+#: lib/post_type.php:58
+msgid "Alle tv berichten"
+msgstr ""
+
+#: lib/post_type.php:64
+msgid "Berichten voor het tv-scherm in het muziekcentrum"
+msgstr ""
+
+#: lib/post_type.php:105
+msgid "Which layout the slide uses"
+msgstr "Welke layout de slide gebruikt"
+
+#: lib/post_type.php:115
+msgid "Whether the image covers or fits inside its area"
+msgstr "Of de afbeelding het vlak vult of erin past"
+
+#: lib/post_type.php:121
+msgid "Start of the window in which the slide shows"
+msgstr "Begin van de periode waarin de slide wordt getoond"
+
+#: lib/post_type.php:127
+msgid "End of the window in which the slide shows"
+msgstr "Einde van de periode waarin de slide wordt getoond"
+
+#: lib/post_type.php:135
+msgid "URL encoded into the slide QR code"
+msgstr "URL die in de QR-code van de slide wordt gezet"
+
+#: lib/post_type.php:186
+msgid "Keep this slide off the screen regardless of its window"
+msgstr "Houdt deze slide van het scherm, ongeacht de periode"
+
+#: lib/settings_page.php:37
+#: lib/settings_page.php:38
+msgid "Instellingen"
+msgstr ""
+
+#: lib/settings_page.php:83
+msgid "Je hebt geen toegang tot deze pagina."
+msgstr ""
+
+#: lib/settings_page.php:102
+msgid "De build ontbreekt. Voer `npm run build` uit."
+msgstr ""
+
+#: lib/tv_message_endpoints.php:83
+msgid "Invalid request arguments."
+msgstr "Ongeldige aanvraagparameters."
+
 #: blocks/tv-settings/build/frontend.js:1
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/selected-date/selected-date.js:62
+#: blocks/tv-settings/src/selected-date/selected-date.js:94
 msgid "Muziekcentrum Soli"
 msgstr ""
 
 #: blocks/tv-settings/build/frontend.js:1
 #: blocks/tv-settings/build/index.js:74
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:150
 #: blocks/tv-settings/src/slides/single-event-slide.js:30
 msgid "Agenda"
 msgstr ""
@@ -73,46 +168,188 @@ msgid "tot"
 msgstr ""
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:80
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:90
 msgid "Edit TV Message"
 msgstr "TV-bericht bewerken"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:93
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:103
 msgid "Add a title…"
 msgstr "Voeg een titel toe…"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:95
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:105
 msgid "Message title"
 msgstr "Berichttitel"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:106
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:116
 msgid "Active Date Range"
 msgstr "Actieve periode"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:113
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:123
 msgid "TV Type"
 msgstr "TV-type"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:117
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:127
 msgid "Image Only"
 msgstr "Alleen afbeelding"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:118
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:128
 msgid "Image + Text"
 msgstr "Afbeelding + tekst"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:119
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:129
 msgid "Text Only"
 msgstr "Alleen tekst"
 
 #: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:124
+#: blocks/tv-settings/src/message-editor/message-editor-modal.js:134
 msgid "URL for QR (optional)"
 msgstr "URL voor QR (optioneel)"
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:68
+msgid "Layout"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:71
+msgid "Afbeelding + tekst"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:72
+msgid "Alleen afbeelding"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:73
+msgid "Alleen tekst"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:78
+msgid "De uitgelichte afbeelding wordt gebruikt."
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:79
+msgid "Deze slide gebruikt geen afbeelding."
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:87
+msgid "Afbeelding vullend of passend"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:90
+msgid "Vullend"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:91
+msgid "Passend"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:99
+msgid "Zichtbaar vanaf"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:106
+msgid "Zichtbaar tot"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:109
+msgid "Buiten deze periode staat de slide niet op het scherm."
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:117
+msgid "URL voor QR-code"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:124
+msgid "Nu niet tonen"
+msgstr ""
+
+#: blocks/tv-settings/build/message-panel.js:1
+#: blocks/tv-settings/src/message-panel.js:127
+msgid "Houdt de slide van het scherm, ongeacht de periode."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:190
+#, js-format
+msgid "%s kon niet worden bijgewerkt."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:213
+msgid "(zonder titel)"
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:283
+msgid "altijd zichtbaar"
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:61
+msgid "Berichten laden mislukte."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:67
+msgid "Instellingen laden mislukte."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:90
+msgid "Instellingen opslaan mislukte."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:97
+#: blocks/tv-settings/src/settings-page.js:105
+msgid "Tv instellingen"
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:115
+msgid "Weergave"
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:119
+msgid "Seconden per slide"
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:126
+msgid "Alleen concerten uit de agenda"
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:138
+msgid "Nog geen tv berichten."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:154
+msgid "Geen komende activiteiten."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:155
+msgid "De agenda-plugin is niet actief, dus er staan geen activiteiten op het scherm."
+msgstr ""

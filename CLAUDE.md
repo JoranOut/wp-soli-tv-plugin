@@ -19,6 +19,8 @@ soli-tv-plugin.php          Bootstrap: constants, activation, textdomain, GitHub
 ├── lib/
 │   ├── post_type.php              soli_tv_message CPT + registered meta (nothing reads it yet)
 │   ├── migrate.php                wp soli-tv migrate - WP-CLI only
+│   ├── message_panel.php          Enqueues the editor sidebar panel
+│   ├── settings_page.php          Tv berichten -> Instellingen, soli_tv_settings option
 │   ├── tv_message_table.php       TVMessageTableHandler - schema + queries
 │   └── tv_message_endpoints.php   soli_tv/v1 REST routes
 ├── blocks/
@@ -149,6 +151,36 @@ and `core/edit-post` scopes since the key has moved between them and this suite 
 versions. Reproduce a fresh user with
 `wp eval 'delete_user_meta( 1, "wp_persisted_preferences" );'` before trusting an editor spec.
 
+## The Instellingen screen
+
+`Tv berichten` -> `Instellingen`, registered in `lib/settings_page.php`, React app in
+`blocks/tv-settings/src/settings-page.js`. Step 5 of `PLAN-cpt-and-kiosk-route.md`, and the shape
+the legacy theme had.
+
+Capability is `edit_posts`, not `manage_options`: turning a slide off is editorial work.
+
+| State | Where it lives |
+|-------|----------------|
+| per-item on/off | `_soli_tv_disabled` meta on the message or event post |
+| delay, onlyConcerts, selectedGroups | `soli_tv_settings` option, `register_setting` with `show_in_rest` |
+
+The option's schema sets `additionalProperties: false`, so a stray key the migration picked up out
+of a block attribute is dropped rather than stored forever.
+
+### An event id is not a post id
+
+`soli_event/v1/events/future/...` answers `{ events, totalEvents, totalPages }` — not an array —
+and each event carries **both** `id` (a row in `{prefix}event_dates`) and `post_id`. The block
+stored `id` in `disabledSlides.events`.
+
+So this plugin's meta goes on `post_id`. Writing it against `id` lands on whatever unrelated post
+happens to carry that number, which is what `wp soli-tv migrate` did until 2026-09-10; it now maps
+the row id through `event_dates` and warns when no row matches.
+
+One post can own several date rows, so the screen collapses them into one switch and the flag
+covers every date of that event. The block could disable one date and not another; nothing in the
+new model expresses that, and the loss is deliberate.
+
 ## Migration
 
 `wp soli-tv migrate [--dry-run]` (`lib/migrate.php`), step 3 of
@@ -228,6 +260,12 @@ the admin-email interstitial and redirects wp-admin to `upgrade.php`.
 
 ### Tests
 
+**The suite runs with one worker, on CI and locally.** Every spec drives the same WordPress
+instance, so parallel spec files collide on global state — three times so far: another spec's
+`tv_message` rows joined the migration's report, orphan postmeta from one run failed the next, and
+deleting `soli_tv_settings` in one file broke an assertion about it in another. Each presented as
+a result unrelated to the change under test. The suite goes from roughly 30s to 1m40s for it.
+
 `seedTvBlockPage()` must be paired with `deleteTvBlockPage()` in an `afterAll`. Unpaired it leaks
 one page per run: 148 had accumulated locally by 2026-09-10, and since `wp soli-tv migrate` reports
 every page carrying the block, the litter made its output unreadable.
@@ -254,8 +292,54 @@ mix of English and Dutch, so each locale translates the opposite direction.
 npm run i18n:build     # pot + mo + json, requires a running wp-env
 ```
 
-JS translations need `wp_set_script_translations()`, already wired for both the editor and
-front-end handles.
+JS translations need `wp_set_script_translations()`, wired for every handle: the block editor
+script, the front end, the message panel and the settings page.
+
+`make-pot` scans `build/` as well as `src/`, and that matters: `wp_set_script_translations()`
+looks for `{domain}-{locale}-{md5(script path)}.json`, and the path it hashes is the **built**
+file. A pot generated from `src/` alone produces JSON nobody loads.
+
+**Rerun `npm run i18n:build` whenever strings change.** It was skipped through steps 4 and 5, and
+about 50 new strings sat untranslated: an `en_US` admin read a Dutch interface while the
+`.pot` still carried a 2026-08-08 timestamp.
+
+**A `.po` entry with stale references is silently dropped from the JSON.** `make-json` only moves
+strings whose references point at a JS file, so `Agenda` kept rendering untranslated even after its
+`msgstr` was filled in — its references predated the current pot. `languages/` is now merged
+against the pot (references rewritten, `msgstr` values carried over), which is what
+`msgmerge` would do if it were available in the container.
+
+The two locales are deliberately asymmetric. Source strings are a mix, so each locale only
+translates the strings written in the other language and leaves the rest empty to fall back to the
+source. `nl_NL` therefore has no JSON file for the panel or settings bundles at all: every string
+in them is Dutch already, `make-json` writes no empty file, and WordPress falls back correctly.
+
+### Never select on translated copy in a test
+
+The suite runs against whatever locale the environment has, and filling in the `en_US`
+translations broke five assertions at once — including two on WordPress's own UI, where
+`Save draft` is `Concept opslaan` in Dutch.
+
+Controls therefore carry stable class hooks (`soli-tv-field--start`,
+`soli-tv-setting--delay`, `data-slide-type`/`data-slide-id` on a row) and specs select on those.
+Same for core: use `button.editor-post-save-draft`, not its name. Dates are formatted in the
+admin's locale, so assert on a year rather than a formatted date.
+
+Both locales are worth running before trusting an admin-UI spec:
+
+```bash
+wp-env run tests-cli -- wp language core install nl_NL
+wp-env run tests-cli -- wp site switch-language nl_NL   # then en_US
+```
+
+### The event plugin is absent on CI
+
+`wp-soli-event-plugin` is loaded locally through `.wp-env.override.json` and is not installed on
+CI, so `{prefix}event_dates` does not exist there. Agenda assertions that seed into it passed
+locally and failed on both CI legs with `Table 'wp_event_dates' doesn't exist`. Guard such tests
+with `test.skip()` on a check of both the active plugin and the table, and guard cleanup deletes
+too — an unguarded `DELETE` against a missing table prints a `wpdb` error that then breaks the
+next `wp eval` JSON read.
 
 ## Releases
 

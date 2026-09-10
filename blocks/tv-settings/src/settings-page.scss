@@ -1,0 +1,36 @@
+.soli-tv-settings {
+	max-width: 720px;
+
+	h1 {
+		margin-bottom: 16px;
+	}
+
+	&__card {
+		margin-bottom: 24px;
+	}
+
+	&__row {
+		align-items: baseline;
+		border-bottom: 1px solid #f0f0f0;
+		display: flex;
+		gap: 16px;
+		justify-content: space-between;
+		padding: 8px 0;
+
+		&:last-child {
+			border-bottom: 0;
+		}
+
+		// The toggle ships its own bottom margin, which doubles up with the row
+		// padding and makes every row look unevenly spaced.
+		.components-base-control {
+			margin-bottom: 0;
+		}
+	}
+
+	&__meta {
+		color: #757575;
+		flex-shrink: 0;
+		font-size: 12px;
+	}
+}

@@ -261,7 +261,9 @@ way `e2e/message-persistence.spec.js` was proved on 2026-09-08.
    first would leave a release where nothing can. MUI therefore also leaves in step 6, with
    `daterange-picker.js`, rather than here.
 5. Add the `Instellingen` submenu, move the app onto it, move settings into the option and the
-   toggles onto items. This is also the fix for the toggles never reaching the screen.
+   toggles onto items. **Done 2026-09-10.** Also the fix for the toggles never reaching the screen.
+   One capability lost on the way: an event's switch is post meta, so it covers every date row of
+   that event, where the block could disable one date and not another.
 6. Delete the block registration, `lib/tv_message_table.php`, `lib/tv_message_endpoints.php` and
    the table.
 7. Add the kiosk route and its own entry point.
