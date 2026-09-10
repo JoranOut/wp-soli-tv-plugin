@@ -135,6 +135,20 @@ Three things cost time here, all measured 2026-09-10:
 `PluginDocumentSettingPanel` also renders collapsed, so its controls are absent from the DOM until
 the panel's toggle is clicked.
 
+**Editor state that lives in user preferences will pass locally and fail on CI.** Two caught this
+way on 2026-09-10, both stored in the `wp_persisted_preferences` user meta:
+
+- the **welcome guide** covers the editor as a modal for a new user, and every click times out. It
+  had been dismissed by hand in the local environment months earlier, so the spec passed here and
+  failed on both CI legs.
+- **`openPanels`** remembers which document panels are expanded. Locally the panel was already
+  open from manual use, hiding the fact that a fresh user gets it closed.
+
+Set the preference in `beforeAll` rather than clicking the modal away, and write both the `core`
+and `core/edit-post` scopes since the key has moved between them and this suite runs two WordPress
+versions. Reproduce a fresh user with
+`wp eval 'delete_user_meta( 1, "wp_persisted_preferences" );'` before trusting an editor spec.
+
 ## Migration
 
 `wp soli-tv migrate [--dry-run]` (`lib/migrate.php`), step 3 of

@@ -46,6 +46,27 @@ function readMeta( id ) {
 	);
 }
 
+/**
+ * Turns off the block editor's welcome guide for the admin user.
+ *
+ * A fresh user gets the guide as a modal over the whole editor, and every click
+ * in this spec then times out. It never showed locally because the preference
+ * had been dismissed by hand months earlier - so these tests passed here and
+ * failed on CI, where the user is new. Set rather than clicked away: a modal
+ * that has to be closed first is one more thing to race.
+ *
+ * Both scopes are written because the key has moved between them across
+ * WordPress versions, and this suite runs against two.
+ */
+function dismissWelcomeGuide() {
+	wpEval(
+		'update_user_meta( 1, "wp_persisted_preferences", array(' +
+			' "core" => array( "welcomeGuide" => false ),' +
+			' "core/edit-post" => array( "welcomeGuide" => false ),' +
+			' "_modified" => gmdate( "c" ) ) );'
+	);
+}
+
 /** Opens the editor and expands the panel, which renders collapsed. */
 async function openPanel( page, id ) {
 	await page.goto( `/wp-admin/post.php?post=${ id }&action=edit`, {
@@ -57,6 +78,9 @@ async function openPanel( page, id ) {
 	const panel = page.locator( '.soli-tv-message-panel' );
 	await expect( panel ).toBeVisible( { timeout: 30000 } );
 
+	// Expanded state is itself a stored preference (`openPanels`), so this
+	// checks rather than assumes: locally the panel was already open from
+	// earlier manual use, which hid the fact that a fresh user gets it closed.
 	const toggle = panel.locator( 'button.components-panel__body-toggle' );
 	if ( ( await toggle.getAttribute( 'aria-expanded' ) ) !== 'true' ) {
 		await toggle.click();
@@ -77,6 +101,7 @@ function cleanup() {
 
 test.beforeAll( () => {
 	cleanup();
+	dismissWelcomeGuide();
 } );
 
 test.afterAll( () => {
