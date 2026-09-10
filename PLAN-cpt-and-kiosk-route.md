@@ -270,7 +270,22 @@ way `e2e/message-persistence.spec.js` was proved on 2026-09-08.
 7. Add the kiosk route and its own entry point. **Done 2026-09-10, before step 6.** The order is
    inverted deliberately: the route is additive, so it can land and be verified while the block
    still works. Deleting the block first would leave a release with no screen at all.
-8. Cache the rendered document, invalidated on `save_post`.
+8. Cache the rendered document, invalidated on `save_post`. **Not done, and I recommend against
+   it as written.** Measured 2026-09-10 in wp-env: `/tv/` answers in 20ms with the real content
+   and 26ms with 65 messages seeded, three times any plausible number. One screen polls it every
+   five minutes.
+
+   The reason given for this step was keeping the screen alive while WordPress is slow or down,
+   and a transient does not do that: it lives in the database and is served by PHP, so it fails in
+   exactly the conditions it was meant to cover. What would deliver that is a static file served
+   by the web server without PHP, and the screen's address has to stay `/tv/`, so that means
+   server configuration rather than a plugin change.
+
+   The cost is not zero either. Event dates live in a table the event plugin owns and fires no
+   hooks for, so a cache would go stale whenever someone adds a date, and the fix for that is a
+   short expiry - which is another way of saying the cache would rarely be used.
+
+   Worth revisiting if the screen ever polls far more often, or if several screens appear.
 
 Steps 1 to 6 are one release, and a major one: the block goes away and any page holding it stops
 rendering. The route in step 7 changes the URL the Pi points at, so it wants its own release and

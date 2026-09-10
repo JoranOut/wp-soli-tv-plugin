@@ -112,9 +112,17 @@ test.describe( 'the screen at /tv/', () => {
 			);
 		}
 
-		// A generous ceiling rather than a tight one: this asserts the absence
-		// of a theme, not a byte budget nobody can change.
-		expect( html.length ).toBeLessThan( 20000 );
+		// The scaffolding is the document minus its payload, and that is what
+		// this caps. Measuring the whole document conflated "no theme" with
+		// "little content": with 65 messages seeded the payload alone pushed it
+		// to 20,707 bytes and this assertion failed on a site that was
+		// perfectly healthy.
+		const withoutPayload = html.replace(
+			/<script id="soli-tv-payload"[\s\S]*?<\/script>/,
+			''
+		);
+
+		expect( withoutPayload.length ).toBeLessThan( 4000 );
 	} );
 
 	test( 'shows a published message that is in its window', async ( {
