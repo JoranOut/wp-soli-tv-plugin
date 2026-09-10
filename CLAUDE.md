@@ -7,30 +7,31 @@ Soli muziekcentrum that cycles through announcements and upcoming events.
 
 The plugin owns two things:
 
-1. **TV messages** — a custom table of scheduled announcements (title, content, image, QR link,
-   active date range, status) managed from the block editor.
-2. **The slideshow** — a block that renders those messages, interleaved with events from the
-   event plugin, as a looping full-screen slideshow.
+1. **TV messages** — `soli_tv_message` posts carrying a layout, an image fit, an active window, a
+   QR link and an on/off switch, edited in the post editor with an overview at
+   `Tv berichten` → `Instellingen`.
+2. **The screen** — `/tv/`, a plugin-owned route that renders those messages interleaved with
+   events from the event plugin as a looping full-screen slideshow.
 
 ## Architecture
 
 ```
 soli-tv-plugin.php          Bootstrap: constants, activation, textdomain, GitHub updater
 ├── lib/
-│   ├── post_type.php              soli_tv_message CPT + registered meta (nothing reads it yet)
+│   ├── post_type.php              soli_tv_message CPT + registered meta
 │   ├── migrate.php                wp soli-tv migrate - WP-CLI only
 │   ├── message_panel.php          Enqueues the editor sidebar panel
 │   ├── settings_page.php          Tv berichten -> Instellingen, soli_tv_settings option
-│   ├── kiosk.php                  /tv/ - the screen, payload printed into the document
-│   ├── tv_message_table.php       TVMessageTableHandler - schema + queries
-│   └── tv_message_endpoints.php   soli_tv/v1 REST routes
-├── blocks/
-│   ├── block.php                  Includes the block registrations
-│   ├── settings.php               Placeholder, currently commented-out boilerplate
-│   └── tv-settings/
-│       ├── index.php              SoliTVSettingsBlock - registers soli/tv-settings
-│       └── src/                   React source, bundled to build/ by wp-scripts
-└── uninstall.php          Drops the table when the plugin is deleted
+│   └── kiosk.php                  /tv/ - the screen, payload printed into the document
+├── blocks/tv-settings/src/    React source, bundled to build/ by wp-scripts
+│   ├── kiosk.js                   The screen at /tv/
+│   ├── settings-page.js           The Instellingen overview
+│   ├── message-panel.js           The editor sidebar panel
+│   └── slides/                    Slide components, shared by the screen
+└── uninstall.php          Drops the legacy table and this plugin's options and meta
+
+The `blocks/tv-settings` path is a leftover name: nothing here registers a block any more. It
+still holds the React source because that is where the build tooling lives.
 ```
 
 ### Optional dependency on the event plugin
@@ -47,30 +48,19 @@ documented way to load the event plugin broke `wp-env start` for anyone who foll
 This is why `.wp-env.json` does **not** reference a sibling checkout — a relative path like
 `../wp-soli-event-plugin` does not exist on a CI runner and would break `wp-env start` there.
 
-## Database
+## The legacy tv_message table
 
-One table, `{prefix}tv_message`, created via `dbDelta()` on activation:
+`{prefix}tv_message` is no longer read by anything. `wp soli-tv migrate` copies its rows onto
+`soli_tv_message` posts, and `uninstall.php` drops the table when the plugin is deleted.
 
-| Column       | Type            | Notes                                    |
-|--------------|-----------------|------------------------------------------|
-| `id`         | BIGINT UNSIGNED | Primary key, auto increment              |
-| `title`      | TEXT            |                                          |
-| `type`       | VARCHAR(20)     | `img_only`, `img_text`, `text_only`      |
-| `content`    | LONGTEXT        |                                          |
-| `start_date` | DATETIME        | Start of the active window               |
-| `end_date`   | DATETIME        | End of the active window                 |
-| `status`     | VARCHAR(20)     | `PLANNED` default; API accepts `draft`, `published`, `archived` |
-| `img`        | BIGINT(20)      | Attachment ID                            |
-| `link`       | TEXT            | URL encoded into the slide's QR code     |
-
-There is no migration runner yet. Adding one means following the `soli_tv_db_version` pattern in
-the root `CLAUDE.md`; `uninstall.php` already cleans that option up.
+**The data is deliberately left in place until a site has been migrated.** Stopping the reads is
+reversible; `DROP TABLE` is not, and production still runs the legacy theme. Nothing in the
+plugin's normal operation touches it.
 
 ## The soli_tv_message post type
 
-Step 2 of `PLAN-cpt-and-kiosk-route.md`, registered in `lib/post_type.php`. **Nothing reads it
-yet** — the slideshow still runs off `{prefix}tv_message` and `soli_tv/v1`. It exists so the
-migration lands on a type whose schema is already enforced.
+Registered in `lib/post_type.php`. Everything reads it: the screen at `/tv/`, the
+`Instellingen` overview and the editor sidebar panel.
 
 | Meta key | Type | Schema |
 |----------|------|--------|
@@ -270,30 +260,14 @@ leaves residue that makes the next run fail for the previous run's reason. Measu
 the guard: disabling it wrote `_soli_tv_disabled` against a deleted event id, which then broke the
 following proof.
 
-## REST API
+## REST
 
-Namespace `soli_tv/v1`:
+There is no plugin-owned REST namespace. `soli_tv/v1` was removed with the block: the admin
+surfaces use `wp/v2/soli_tv_message` and `wp/v2/settings`, and the screen is served HTML with its
+data printed into the document.
 
-| Route            | Method | Capability   | Notes                                     |
-|------------------|--------|--------------|-------------------------------------------|
-| `/messages`      | GET    | public       | Messages whose window covers now. 204 when empty. |
-| `/message/{id}`  | GET    | public       | Single message object. 204 when not found. |
-| `/message[/{id}]`| POST   | `edit_posts` | Creates or updates. 400 on invalid body.  |
-
-Accepted `status` values live in `SOLI_TV_MESSAGE_STATUSES`: `PLANNED` (the column default),
-`draft`, `published`, `archived`. `PLANNED` is in the list so a row created by a direct insert can
-be saved again through the API.
-
-Writes go through `wpdb::insert()`/`wpdb::update()` with an explicit format per column, not
-hand-built SQL, because `wpdb::prepare()` renders a null bound to `%s` as `''` - measured, that
-stored a missing `img` as `0` rather than `NULL`. `e2e/message-persistence.spec.js` asserts this
-and was confirmed to fail against the old statement.
-
-Dates cross the wire as MySQL `DATETIME` literals in site-local time (`toMysqlDateTime()` in
-`tv-message-provider.js`). A `Date` serialized to JSON is ISO-8601 with `T`/`Z`, which MySQL will
-not accept for a `DATETIME` column.
-
-The GET routes are deliberately public — the TV display polls them without a session.
+Four of the six defects fixed in #15 were hand-rolled validation in those routes, which is the
+argument that produced this whole migration.
 
 ## Development
 
@@ -346,8 +320,8 @@ mix of English and Dutch, so each locale translates the opposite direction.
 npm run i18n:build     # pot + mo + json, requires a running wp-env
 ```
 
-JS translations need `wp_set_script_translations()`, wired for every handle: the block editor
-script, the front end, the message panel and the settings page.
+JS translations need `wp_set_script_translations()`, wired for every handle: the screen, the
+message panel and the settings page.
 
 `make-pot` scans `build/` as well as `src/`, and that matters: `wp_set_script_translations()`
 looks for `{domain}-{locale}-{md5(script path)}.json`, and the path it hashes is the **built**
@@ -409,8 +383,9 @@ built `build/` directory must exist before packaging, so `npm run publish` build
 
 ## Known gaps
 
-- `blocks/settings.php` is entirely commented-out boilerplate copied from the featured-image
-  plugin, still `require_once`d by `blocks/block.php`.
-- Nothing in the editor sets `status` yet; the provider defaults a new message to `draft`, so
-  `published` and `archived` are reachable only over the API.
-- No migration runner; schema changes currently only reach fresh activations.
+- The screen re-reads `/tv/` every five minutes and rebuilds the payload each time. Step 8 of
+  `PLAN-cpt-and-kiosk-route.md` caches the document, which also keeps the screen working while
+  WordPress is slow or down.
+- An event's on/off switch is post meta, so it covers every date row of that event. The old block
+  could disable one date and not another.
+- `blocks/tv-settings` is a directory name that no longer describes its contents.

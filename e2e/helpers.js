@@ -182,90 +182,6 @@ function wpEvalJson( php ) {
 	}
 }
 
-/**
- * Creates a published page whose content is a single soli/tv-settings block.
- *
- * This is the plugin's only front-end PHP surface: the block's `render_callback`
- * (`SoliTVSettingsBlock::theHTML`) runs while the page renders, so a page
- * carrying the block is what makes front-end diagnostics observable at all.
- *
- * Seeded through wp-cli rather than the REST API: the REST route needs a
- * `wp_rest` nonce read out of wp-admin, and doing that once per Playwright
- * worker raced against the editor bundle loading under parallel load. wp-cli is
- * synchronous and has no such dependency.
- *
- * With plain permalinks the page is reachable at `?page_id=`.
- *
- * Delete it with `deleteTvBlockPage()` in an afterAll. Left behind, one page
- * accumulates per spec run: 148 of them had piled up in the local environment
- * by 2026-09-10, and `wp soli-tv migrate` reports every page carrying the
- * block, so the litter turned the migration's output unreadable.
- *
- * @return {{id: number, link: string}} The created page.
- */
-function seedTvBlockPage() {
-	const content =
-		'<!-- wp:soli/tv-settings {"selectedGroups":["Harmonie orkest"]} /-->';
-
-	const id = parseInt(
-		execFileSync(
-			'npx',
-			[
-				'wp-env',
-				'run',
-				'tests-cli',
-				'--',
-				'wp',
-				'post',
-				'create',
-				'--post_type=page',
-				'--post_status=publish',
-				'--post_title=TV settings block diagnostics fixture',
-				`--post_content=${ content }`,
-				'--porcelain',
-			],
-			{ cwd: path.join( __dirname, '..' ), encoding: 'utf8' }
-		)
-			.trim()
-			.split( /\s+/ )
-			.pop(),
-		10
-	);
-
-	if ( ! id ) {
-		throw new Error( 'Could not seed the tv-settings fixture page' );
-	}
-
-	return { id, link: `/?page_id=${ id }` };
-}
-
-/**
- * Removes a page created by `seedTvBlockPage()`.
- *
- * @param {{id: number}|undefined} fixture
- */
-function deleteTvBlockPage( fixture ) {
-	if ( ! fixture || ! fixture.id ) {
-		return;
-	}
-
-	execFileSync(
-		'npx',
-		[
-			'wp-env',
-			'run',
-			'tests-cli',
-			'--',
-			'wp',
-			'post',
-			'delete',
-			String( fixture.id ),
-			'--force',
-		],
-		{ cwd: path.join( __dirname, '..' ), encoding: 'utf8' }
-	);
-}
-
 module.exports = {
 	ADMIN_USER,
 	ADMIN_PASSWORD,
@@ -276,7 +192,5 @@ module.exports = {
 	wpEval,
 	wpEvalJson,
 	loginAsAdmin,
-	seedTvBlockPage,
-	deleteTvBlockPage,
 	expectNoPhpDiagnostics,
 };

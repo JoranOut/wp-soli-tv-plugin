@@ -1,7 +1,7 @@
 import './single-event-slide.scss'
 import { useContext } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import {SlidesContext} from "../providers/slides-provider";
+import {SlidesContext} from "../providers/slides-context";
 import SelectedDate from "../selected-date/selected-date";
 import defaultBackground from '../../assets/img/default_background.jpg';
 import { imageUrl as slideImageUrl } from '../utils/slide-image';

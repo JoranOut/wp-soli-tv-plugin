@@ -1,7 +1,7 @@
 import './kiosk.scss';
 import { createRoot, useState, useEffect } from '@wordpress/element';
 import SlideShow from './slides/slide-show';
-import { SlidesContext } from './providers/slides-provider';
+import { SlidesContext } from './providers/slides-context';
 
 /**
  * The screen at `/tv/`.
