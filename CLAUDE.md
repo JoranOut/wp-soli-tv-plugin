@@ -19,6 +19,8 @@ soli-tv-plugin.php          Bootstrap: constants, activation, textdomain, GitHub
 ├── lib/
 │   ├── post_type.php              soli_tv_message CPT + registered meta (nothing reads it yet)
 │   ├── migrate.php                wp soli-tv migrate - WP-CLI only
+│   ├── message_panel.php          Enqueues the editor sidebar panel
+│   ├── settings_page.php          Tv berichten -> Instellingen, soli_tv_settings option
 │   ├── tv_message_table.php       TVMessageTableHandler - schema + queries
 │   └── tv_message_endpoints.php   soli_tv/v1 REST routes
 ├── blocks/
@@ -149,6 +151,36 @@ and `core/edit-post` scopes since the key has moved between them and this suite 
 versions. Reproduce a fresh user with
 `wp eval 'delete_user_meta( 1, "wp_persisted_preferences" );'` before trusting an editor spec.
 
+## The Instellingen screen
+
+`Tv berichten` -> `Instellingen`, registered in `lib/settings_page.php`, React app in
+`blocks/tv-settings/src/settings-page.js`. Step 5 of `PLAN-cpt-and-kiosk-route.md`, and the shape
+the legacy theme had.
+
+Capability is `edit_posts`, not `manage_options`: turning a slide off is editorial work.
+
+| State | Where it lives |
+|-------|----------------|
+| per-item on/off | `_soli_tv_disabled` meta on the message or event post |
+| delay, onlyConcerts, selectedGroups | `soli_tv_settings` option, `register_setting` with `show_in_rest` |
+
+The option's schema sets `additionalProperties: false`, so a stray key the migration picked up out
+of a block attribute is dropped rather than stored forever.
+
+### An event id is not a post id
+
+`soli_event/v1/events/future/...` answers `{ events, totalEvents, totalPages }` — not an array —
+and each event carries **both** `id` (a row in `{prefix}event_dates`) and `post_id`. The block
+stored `id` in `disabledSlides.events`.
+
+So this plugin's meta goes on `post_id`. Writing it against `id` lands on whatever unrelated post
+happens to carry that number, which is what `wp soli-tv migrate` did until 2026-09-10; it now maps
+the row id through `event_dates` and warns when no row matches.
+
+One post can own several date rows, so the screen collapses them into one switch and the flag
+covers every date of that event. The block could disable one date and not another; nothing in the
+new model expresses that, and the loss is deliberate.
+
 ## Migration
 
 `wp soli-tv migrate [--dry-run]` (`lib/migrate.php`), step 3 of
@@ -227,6 +259,12 @@ future, so a started environment is immediately usable — without it WordPress 
 the admin-email interstitial and redirects wp-admin to `upgrade.php`.
 
 ### Tests
+
+**The suite runs with one worker, on CI and locally.** Every spec drives the same WordPress
+instance, so parallel spec files collide on global state — three times so far: another spec's
+`tv_message` rows joined the migration's report, orphan postmeta from one run failed the next, and
+deleting `soli_tv_settings` in one file broke an assertion about it in another. Each presented as
+a result unrelated to the change under test. The suite goes from roughly 30s to 1m40s for it.
 
 `seedTvBlockPage()` must be paired with `deleteTvBlockPage()` in an `afterAll`. Unpaired it leaks
 one page per run: 148 had accumulated locally by 2026-09-10, and since `wp soli-tv migrate` reports
