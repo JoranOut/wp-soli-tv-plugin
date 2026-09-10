@@ -1,7 +1,7 @@
 import './slide-show.scss';
 import './qr-wrapper.scss';
 import {useContext, useState, useEffect, useRef} from '@wordpress/element';
-import {SlidesContext} from "../providers/slides-provider";
+import {SlidesContext} from "../providers/slides-context";
 import SingleSlide from "./single-slide";
 import {ArrowKeyNavigator} from "../utils/ArrowKeyNavigator";
 

@@ -21,9 +21,6 @@ require_once 'lib/migrate.php';
 require_once 'lib/message_panel.php';
 require_once 'lib/settings_page.php';
 require_once 'lib/kiosk.php';
-require_once 'lib/tv_message_table.php';
-require_once 'lib/tv_message_endpoints.php';
-require_once 'blocks/block.php';
 
 define('SOLI_TV__PLUGIN_DIR_PATH', plugin_dir_path(__FILE__));
 define('SOLI_TV__PLUGIN_DIR_URL', plugin_dir_url(__FILE__));
@@ -36,8 +33,8 @@ function loadTextdomain() {
 
 register_activation_hook(__FILE__, "Soli\TV\onActivate");
 function onActivate() {
-    $tvMessageTableHandler = new TVMessageTableHandler();
-    $tvMessageTableHandler->createTVMessageTable();
+    // No table to create any more: messages are posts. The rewrite flush is
+    // what makes /tv/ resolve on a fresh activation.
     flush_rewrite_rules();
 }
 

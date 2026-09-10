@@ -21,13 +21,23 @@ test.describe( 'Plugin activation', () => {
 		await expect( row.locator( '.deactivate' ) ).toBeVisible();
 	} );
 
-	test( 'creates the tv_message table on activation', async ( { page } ) => {
-		// The messages route reads straight from the table. A missing table
-		// surfaces as a 500 rather than the 200/204 the handler returns.
+	test( 'registers the soli_tv_message post type on activation', async ( {
+		page,
+	} ) => {
+		// Replaces the old "creates the tv_message table" assertion: messages
+		// are posts now, and a type that failed to register answers 404 here.
 		const response = await page.request.get(
-			'/?rest_route=/soli_tv/v1/messages'
+			'/?rest_route=/wp/v2/soli_tv_message'
 		);
-		expect( [ 200, 204 ] ).toContain( response.status() );
+		expect( response.status() ).toBe( 200 );
+	} );
+
+	test( 'serves the screen at /tv/', async ( { page } ) => {
+		// The rewrite rule is added on init and only takes effect once the
+		// rules are rebuilt, which activation and the stored rewrite version
+		// are both responsible for. A 404 here means neither happened.
+		const response = await page.request.get( '/tv/' );
+		expect( response.status() ).toBe( 200 );
 	} );
 
 	// The ad-hoc "no PHP fatal or warning on the dashboard" assertion that used
@@ -36,14 +46,11 @@ test.describe( 'Plugin activation', () => {
 	// unscoped `Warning: ` check would have flagged unrelated core noise, and it
 	// only ever read wp-admin, which says nothing about front-end rendering.
 
-	test( 'registers the soli/tv-settings block in the editor', async ( {
-		page,
-	} ) => {
+	test( 'no longer registers the soli/tv-settings block', async ( { page } ) => {
 		await page.goto( '/wp-admin/post-new.php' );
 
-		// Waits for the editor bundle, which is what actually proves the
-		// registered script dependencies resolve - a missing handle would stop
-		// wp.blocks from ever appearing.
+		// Waits for the editor bundle first, so this asserts an absence in a
+		// loaded editor rather than in one that never booted.
 		await page.waitForFunction(
 			() => window.wp && window.wp.blocks && window.wp.blocks.getBlockType,
 			undefined,
@@ -55,6 +62,10 @@ test.describe( 'Plugin activation', () => {
 			return type ? type.name : null;
 		} );
 
-		expect( blockName ).toBe( 'soli/tv-settings' );
+		// The block is gone: editing happens in the post editor and the
+		// overview lives at Tv berichten -> Instellingen. A page still holding
+		// the block markup renders nothing, which is why `wp soli-tv migrate`
+		// reports those pages.
+		expect( blockName ).toBeNull();
 	} );
 } );

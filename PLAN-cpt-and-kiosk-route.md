@@ -266,7 +266,13 @@ way `e2e/message-persistence.spec.js` was proved on 2026-09-08.
    One capability lost on the way: an event's switch is post meta, so it covers every date row of
    that event, where the block could disable one date and not another.
 6. Delete the block registration, `lib/tv_message_table.php`, `lib/tv_message_endpoints.php` and
-   the table.
+   the table. **Done 2026-09-10, except the table itself.** The rows stay: stopping the reads is
+   reversible and `DROP TABLE` is not, production has not cut over, and `uninstall.php` already
+   drops it on delete. MUI, dayjs and the 398 KB editor bundle went with the block.
+
+   Verified that `has_block()` and `parse_blocks()` still work on a page whose block is no longer
+   registered, which is what lets the migration read old attributes off a real site after this
+   lands.
 7. Add the kiosk route and its own entry point. **Done 2026-09-10, before step 6.** The order is
    inverted deliberately: the route is additive, so it can land and be verified while the block
    still works. Deleting the block first would leave a release with no screen at all.

@@ -17,6 +17,41 @@ test.describe.configure( { mode: 'serial' } );
 
 const MARKER = 'spec-mig';
 
+/**
+ * Recreates the legacy `{prefix}tv_message` table.
+ *
+ * The plugin stopped creating it when the block was removed, so a fresh
+ * install has no such table - and this spec exists to cover a site that still
+ * does. Building it here is the honest fixture: the migration's whole purpose
+ * is the upgrade path from that schema, and a spec that skipped when the table
+ * was absent would silently stop covering it on CI, which is exactly where the
+ * table never exists.
+ *
+ * The columns are the schema the plugin shipped, copied verbatim from the
+ * handler that used to own it.
+ */
+function ensureLegacyTable() {
+	wpEval(
+		'global $wpdb;' +
+			' $t = $wpdb->prefix . "tv_message";' +
+			' if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $t ) ) === $t ) { return; }' +
+			' $charset = $wpdb->get_charset_collate();' +
+			' require_once ABSPATH . "wp-admin/includes/upgrade.php";' +
+			' dbDelta( "CREATE TABLE $t (' +
+			' id BIGINT(20) unsigned NOT NULL AUTO_INCREMENT,' +
+			' title TEXT NOT NULL,' +
+			" type VARCHAR(20) NOT NULL DEFAULT 'img_text'," +
+			' content LONGTEXT NOT NULL,' +
+			' start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,' +
+			' end_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,' +
+			" status varchar(20) NOT NULL DEFAULT 'PLANNED'," +
+			' img BIGINT(20),' +
+			' link TEXT,' +
+			' PRIMARY KEY  (id)' +
+			' ) $charset;" );'
+	);
+}
+
 function runMigrate( args = [] ) {
 	return execFileSync(
 		'npx',
@@ -76,9 +111,14 @@ function readMessages() {
 }
 
 function cleanup() {
+	// The DELETE is guarded: the table no longer exists on a fresh install, and
+	// an unguarded statement against a missing table prints a wpdb error that
+	// then breaks the next wp eval JSON read.
 	wpEval(
 		'global $wpdb; $t = $wpdb->prefix . "tv_message";' +
-			' $wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE title LIKE %s", "' + MARKER + '%" ) );' +
+			' if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $t ) ) === $t ) {' +
+			'   $wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE title LIKE %s", "' + MARKER + '%" ) );' +
+			' }' +
 			' $q = new WP_Query( array( "post_type" => array( "soli_tv_message", "tv", "page" ),' +
 			'   "post_status" => "any", "posts_per_page" => -1, "s" => "' + MARKER + '" ) );' +
 			' foreach ( $q->posts as $p ) {' +
@@ -94,6 +134,7 @@ function cleanup() {
 }
 
 test.beforeAll( () => {
+	ensureLegacyTable();
 	cleanup();
 } );
 

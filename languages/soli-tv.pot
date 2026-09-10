@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-10T20:46:09+00:00\n"
+"POT-Creation-Date: 2026-09-10T21:03:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: soli-tv\n"
@@ -128,19 +128,11 @@ msgstr ""
 msgid "De build ontbreekt. Voer `npm run build` uit."
 msgstr ""
 
-#: lib/tv_message_endpoints.php:83
-msgid "Invalid request arguments."
-msgstr ""
-
-#: blocks/tv-settings/build/frontend.js:1
-#: blocks/tv-settings/build/index.js:74
 #: blocks/tv-settings/build/kiosk.js:1
 #: blocks/tv-settings/src/selected-date/selected-date.js:94
 msgid "Muziekcentrum Soli"
 msgstr ""
 
-#: blocks/tv-settings/build/frontend.js:1
-#: blocks/tv-settings/build/index.js:74
 #: blocks/tv-settings/build/kiosk.js:1
 #: blocks/tv-settings/build/settings-page.js:2
 #: blocks/tv-settings/src/settings-page.js:152
@@ -148,83 +140,14 @@ msgstr ""
 msgid "Agenda"
 msgstr ""
 
-#: blocks/tv-settings/build/frontend.js:1
-#: blocks/tv-settings/build/index.js:74
 #: blocks/tv-settings/build/kiosk.js:1
 #: blocks/tv-settings/src/slides/single-event-slide.js:42
 msgid "SOLI muziekcentrum"
 msgstr ""
 
-#: blocks/tv-settings/build/frontend.js:1
-#: blocks/tv-settings/build/index.js:74
 #: blocks/tv-settings/build/kiosk.js:1
 #: blocks/tv-settings/src/slides/single-tv-slide.js:32
 msgid "Scan de QR!"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:1
-#: blocks/tv-settings/src/settings/settings.js:12
-msgid "Settings"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:1
-#: blocks/tv-settings/src/settings/settings.js:16
-msgid "Delay in seconds"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:1
-#: blocks/tv-settings/src/settings/settings.js:19
-msgid "Delay between slides (in seconds)"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/daterange-picker/daterange-picker.js:96
-msgid "tot"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:90
-msgid "Edit TV Message"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:103
-msgid "Add a title…"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:105
-msgid "Message title"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:116
-msgid "Active Date Range"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:123
-msgid "TV Type"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:127
-msgid "Image Only"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:128
-msgid "Image + Text"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:129
-msgid "Text Only"
-msgstr ""
-
-#: blocks/tv-settings/build/index.js:74
-#: blocks/tv-settings/src/message-editor/message-editor-modal.js:134
-msgid "URL for QR (optional)"
 msgstr ""
 
 #: blocks/tv-settings/build/message-panel.js:1
