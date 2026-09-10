@@ -116,6 +116,7 @@ function SettingsPage() {
         </CardHeader>
         <CardBody>
           <RangeControl
+            className="soli-tv-setting--delay"
             label={__("Seconden per slide", "soli-tv")}
             value={settings.delay}
             min={5}
@@ -123,6 +124,7 @@ function SettingsPage() {
             onChange={(delay) => saveSettings({ ...settings, delay })}
           />
           <ToggleControl
+            className="soli-tv-setting--only-concerts"
             label={__("Alleen concerten uit de agenda", "soli-tv")}
             checked={!!settings.onlyConcerts}
             onChange={(onlyConcerts) =>
@@ -208,7 +210,12 @@ function SlideList({ title, items, empty, action, onError }) {
           const enabled = key in overrides ? overrides[key] : item.enabled;
 
           return (
-            <div className="soli-tv-settings__row" key={key}>
+            <div
+              className="soli-tv-settings__row"
+              data-slide-type={item.type}
+              data-slide-id={item.id}
+              key={key}
+            >
               <ToggleControl
                 label={item.title || __("(zonder titel)", "soli-tv")}
                 checked={enabled}
@@ -317,7 +324,19 @@ function dedupeById(items) {
   });
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat("nl-NL", {
+/**
+ * The admin's own locale, from the `lang` WordPress puts on <html>.
+ *
+ * Hardcoding nl-NL here made an English admin read "1 mrt 2026" next to
+ * labels that had just been translated. The slideshow is a different case and
+ * stays Dutch on purpose: that screen hangs in Driehuis and has one audience.
+ */
+const ADMIN_LOCALE =
+  (typeof document !== "undefined" &&
+    document.documentElement.getAttribute("lang")) ||
+  "nl-NL";
+
+const DATE_FORMAT = new Intl.DateTimeFormat(ADMIN_LOCALE, {
   day: "numeric",
   month: "short",
   year: "numeric",

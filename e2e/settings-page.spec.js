@@ -16,6 +16,20 @@ const { wpEval, wpEvalJson } = require( './helpers' );
 test.describe.configure( { mode: 'serial' } );
 
 const MARKER = 'spec-settings';
+
+/**
+ * Whether the event plugin is here at all.
+ *
+ * `wp-soli-event-plugin` is an optional dependency, loaded locally through
+ * `.wp-env.override.json` and absent on CI. The agenda assertions seed into its
+ * `event_dates` table, so on CI they failed with "Table 'wp_event_dates'
+ * doesn't exist" while passing locally - the same shape of local/CI divergence
+ * as the editor's welcome guide.
+ *
+ * Both conditions are checked: the table is what the seeding needs, and the
+ * plugin being active is what makes the screen render an agenda at all.
+ */
+let eventsAvailable = false;
 const PAGE = '/wp-admin/edit.php?post_type=soli_tv_message&page=soli-tv-settings';
 
 function seedMessage( title ) {
@@ -60,13 +74,18 @@ function readOption() {
 }
 
 function cleanup() {
+	// The event_dates delete is guarded: the table only exists where the event
+	// plugin is installed, and an unguarded DELETE against a missing table
+	// prints a wpdb error that then breaks the next wp eval JSON read.
 	wpEval(
 		'global $wpdb;' +
+			' $dates = $wpdb->prefix . "event_dates";' +
+			' $has_dates = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $dates ) ) === $dates;' +
 			" $q = new WP_Query( array( 'post_type' => array( 'soli_tv_message', 'soli_event' )," +
 			" 'post_status' => 'any', 'posts_per_page' => -1, 's' => '" + MARKER + "' ) );" +
 			' foreach ( $q->posts as $p ) {' +
 			"   if ( strpos( $p->post_title, '" + MARKER + "' ) === 0 ) {" +
-			'     $wpdb->delete( $wpdb->prefix . "event_dates", array( "post_id" => $p->ID ) );' +
+			'     if ( $has_dates ) { $wpdb->delete( $dates, array( "post_id" => $p->ID ) ); }' +
 			'     wp_delete_post( $p->ID, true );' +
 			'   }' +
 			' }' +
@@ -90,6 +109,15 @@ function row( page, title ) {
 }
 
 test.beforeAll( () => {
+	eventsAvailable = wpEvalJson(
+		"require_once ABSPATH . 'wp-admin/includes/plugin.php';" +
+			' global $wpdb; $table = $wpdb->prefix . "event_dates";' +
+			' echo wp_json_encode(' +
+			"   is_plugin_active( 'wp-soli-event-plugin/soli-event-plugin.php' )" +
+			'   && $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) === $table' +
+			' );'
+	);
+
 	cleanup();
 } );
 
@@ -128,7 +156,14 @@ test.describe( 'the Instellingen screen', () => {
 
 		const listed = row( page, MARKER + ' listed' );
 		await expect( listed ).toBeVisible();
-		await expect( listed ).toContainText( 'dec 2026' );
+
+		// The year, not a formatted date: the screen formats in the admin's own
+		// locale, so asserting "dec 2026" passed only while the formatter was
+		// hardcoded to Dutch and broke the moment it followed the locale.
+		await expect( listed ).toContainText( '2026' );
+		// Neither fallback phrasing, whichever locale is active.
+		await expect( listed ).not.toContainText( 'altijd zichtbaar' );
+		await expect( listed ).not.toContainText( 'always visible' );
 	} );
 
 	test( 'writes a message switch onto that post', async ( { page } ) => {
@@ -145,6 +180,11 @@ test.describe( 'the Instellingen screen', () => {
 	test( 'writes an event switch onto the event post, not the date row', async ( {
 		page,
 	} ) => {
+		test.skip(
+			! eventsAvailable,
+			'wp-soli-event-plugin is not installed in this environment'
+		);
+
 		const seeded = seedEventWithTwoDates( 'agenda' );
 		await openSettings( page );
 
@@ -167,6 +207,11 @@ test.describe( 'the Instellingen screen', () => {
 	} );
 
 	test( 'shows one switch for an event with two dates', async ( { page } ) => {
+		test.skip(
+			! eventsAvailable,
+			'wp-soli-event-plugin is not installed in this environment'
+		);
+
 		await openSettings( page );
 
 		// Two switches writing the same post meta would leave one of them
@@ -181,11 +226,13 @@ test.describe( 'the Instellingen screen', () => {
 	test( 'saves the delay into the soli_tv_settings option', async ( { page } ) => {
 		await openSettings( page );
 
-		const slider = page.getByRole( 'spinbutton', {
-			name: /Seconden per slide/i,
-		} );
-		await slider.fill( '45' );
-		await slider.blur();
+		// Selected by class, not label: the label is translated and this suite
+		// runs against whichever locale the environment happens to use.
+		const delay = page.locator(
+			'.soli-tv-setting--delay input[type="number"]'
+		);
+		await delay.fill( '45' );
+		await delay.blur();
 
 		await expect
 			.poll( () => readOption().delay, { timeout: 15000 } )

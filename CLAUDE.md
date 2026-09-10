@@ -292,8 +292,54 @@ mix of English and Dutch, so each locale translates the opposite direction.
 npm run i18n:build     # pot + mo + json, requires a running wp-env
 ```
 
-JS translations need `wp_set_script_translations()`, already wired for both the editor and
-front-end handles.
+JS translations need `wp_set_script_translations()`, wired for every handle: the block editor
+script, the front end, the message panel and the settings page.
+
+`make-pot` scans `build/` as well as `src/`, and that matters: `wp_set_script_translations()`
+looks for `{domain}-{locale}-{md5(script path)}.json`, and the path it hashes is the **built**
+file. A pot generated from `src/` alone produces JSON nobody loads.
+
+**Rerun `npm run i18n:build` whenever strings change.** It was skipped through steps 4 and 5, and
+about 50 new strings sat untranslated: an `en_US` admin read a Dutch interface while the
+`.pot` still carried a 2026-08-08 timestamp.
+
+**A `.po` entry with stale references is silently dropped from the JSON.** `make-json` only moves
+strings whose references point at a JS file, so `Agenda` kept rendering untranslated even after its
+`msgstr` was filled in — its references predated the current pot. `languages/` is now merged
+against the pot (references rewritten, `msgstr` values carried over), which is what
+`msgmerge` would do if it were available in the container.
+
+The two locales are deliberately asymmetric. Source strings are a mix, so each locale only
+translates the strings written in the other language and leaves the rest empty to fall back to the
+source. `nl_NL` therefore has no JSON file for the panel or settings bundles at all: every string
+in them is Dutch already, `make-json` writes no empty file, and WordPress falls back correctly.
+
+### Never select on translated copy in a test
+
+The suite runs against whatever locale the environment has, and filling in the `en_US`
+translations broke five assertions at once — including two on WordPress's own UI, where
+`Save draft` is `Concept opslaan` in Dutch.
+
+Controls therefore carry stable class hooks (`soli-tv-field--start`,
+`soli-tv-setting--delay`, `data-slide-type`/`data-slide-id` on a row) and specs select on those.
+Same for core: use `button.editor-post-save-draft`, not its name. Dates are formatted in the
+admin's locale, so assert on a year rather than a formatted date.
+
+Both locales are worth running before trusting an admin-UI spec:
+
+```bash
+wp-env run tests-cli -- wp language core install nl_NL
+wp-env run tests-cli -- wp site switch-language nl_NL   # then en_US
+```
+
+### The event plugin is absent on CI
+
+`wp-soli-event-plugin` is loaded locally through `.wp-env.override.json` and is not installed on
+CI, so `{prefix}event_dates` does not exist there. Agenda assertions that seed into it passed
+locally and failed on both CI legs with `Table 'wp_event_dates' doesn't exist`. Guard such tests
+with `test.skip()` on a check of both the active plugin and the table, and guard cleanup deletes
+too — an unguarded `DELETE` against a missing table prints a `wpdb` error that then breaks the
+next `wp eval` JSON read.
 
 ## Releases
 

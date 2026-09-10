@@ -60,11 +60,16 @@ function MessageFields() {
           unspaced the help text of one ran straight into the label of the
           next. A grid gap is version-proof: it does not depend on whichever
           margin default @wordpress/components currently ships. */}
+      {/* Each control carries a stable class. Tests must not select on label
+          text: this plugin ships nl_NL and en_US, so a selector like
+          getByLabel("Zichtbaar vanaf") holds only in one locale - and broke
+          the moment the en_US translations were filled in. */}
       <div style={{ display: "grid", gap: "16px" }}>
         {/* Default control margins are kept deliberately: with
 			     __nextHasNoMarginBottom the help text of one control collided
 			     with the label of the next in the sidebar's narrow column. */}
         <SelectControl
+          className="soli-tv-field--layout"
           label={__("Layout", "soli-tv")}
           value={layout}
           options={[
@@ -84,6 +89,7 @@ function MessageFields() {
 			     rather than disabled: a control that can never apply is noise. */}
         {showsImage && (
           <SelectControl
+            className="soli-tv-field--fit"
             label={__("Afbeelding vullend of passend", "soli-tv")}
             value={meta?._soli_tv_fit || "cover"}
             options={[
@@ -96,6 +102,7 @@ function MessageFields() {
 
         <TextControl
           type="datetime-local"
+          className="soli-tv-field--start"
           label={__("Zichtbaar vanaf", "soli-tv")}
           value={meta?._soli_tv_start || ""}
           onChange={update("_soli_tv_start")}
@@ -103,6 +110,7 @@ function MessageFields() {
 
         <TextControl
           type="datetime-local"
+          className="soli-tv-field--end"
           label={__("Zichtbaar tot", "soli-tv")}
           value={meta?._soli_tv_end || ""}
           onChange={update("_soli_tv_end")}
@@ -114,6 +122,7 @@ function MessageFields() {
 
         <TextControl
           type="url"
+          className="soli-tv-field--link"
           label={__("URL voor QR-code", "soli-tv")}
           value={meta?._soli_tv_link || ""}
           onChange={update("_soli_tv_link")}
@@ -121,6 +130,7 @@ function MessageFields() {
         />
 
         <ToggleControl
+          className="soli-tv-field--disabled"
           label={__("Nu niet tonen", "soli-tv")}
           checked={!!meta?._soli_tv_disabled}
           onChange={update("_soli_tv_disabled")}
