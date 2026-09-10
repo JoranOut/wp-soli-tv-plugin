@@ -57,6 +57,13 @@ This is why `.wp-env.json` does **not** reference a sibling checkout — a relat
 reversible; `DROP TABLE` is not, and production still runs the legacy theme. Nothing in the
 plugin's normal operation touches it.
 
+Since the plugin no longer creates it, a fresh install has no such table, and
+`e2e/migrate.spec.js` builds the legacy schema itself before seeding. That is deliberate rather
+than skipping when the table is absent: the migration exists for sites that still have it, and CI
+is precisely where a fresh install never does — so a skip there would quietly stop covering the
+upgrade path. Guard any statement against this table with a `SHOW TABLES LIKE` check; an
+unguarded one prints a `wpdb` error that breaks the next `wp eval` JSON read.
+
 ## The soli_tv_message post type
 
 Registered in `lib/post_type.php`. Everything reads it: the screen at `/tv/`, the
