@@ -13,6 +13,20 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+// A second copy of this plugin may still be active - for instance when another
+// version is installed alongside this one and this folder is the one being
+// deleted. Removing shared data would break that active copy, so bail out.
+$soli_tv_active = (array) get_option( 'active_plugins', array() );
+if ( is_multisite() ) {
+	$soli_tv_active = array_merge( $soli_tv_active, array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
+}
+foreach ( $soli_tv_active as $soli_tv_active_file ) {
+	if ( basename( $soli_tv_active_file ) === 'soli-tv-plugin.php' && dirname( $soli_tv_active_file ) !== basename( __DIR__ ) ) {
+		return;
+	}
+}
+unset( $soli_tv_active, $soli_tv_active_file );
+
 global $wpdb;
 
 // The legacy messages table. Nothing reads it since the move to the
