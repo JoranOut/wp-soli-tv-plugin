@@ -33,12 +33,18 @@ const KIOSK_REWRITE_VERSION = '1';
 /**
  * How many upcoming event dates the screen carries.
  *
- * The `Instellingen` list deliberately reaches further than this (see
- * `SETTINGS_EVENT_HORIZON`) so an event can be switched off before it ever
- * comes into view. The screen itself stays short: at 20 seconds a slide, 20
- * dates is already a seven-minute loop.
+ * This is the whole of the screen's agenda: these dates get a slide each *and*
+ * they are the list on the panel beside every event slide. One number, so the
+ * rotation can never run past what the panel says is coming.
+ *
+ * Eight is what fits that panel on a 1080-high screen. Raising it lengthens the
+ * loop and clips the panel, so raise the row budget with it.
+ *
+ * The `Instellingen` list reaches much further (see `SETTINGS_EVENT_HORIZON`),
+ * because an event has to be switchable off before it ever comes into view.
+ * That list is not what the screen shows.
  */
-const KIOSK_EVENT_LIMIT = 20;
+const KIOSK_EVENT_LIMIT = 8;
 
 add_action('init', 'Soli\TV\soli_tv_add_kiosk_route', 8);
 add_filter('query_vars', 'Soli\TV\soli_tv_register_kiosk_query_var');
