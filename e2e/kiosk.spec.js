@@ -156,6 +156,40 @@ test.describe( 'the screen at /tv/', () => {
 		expect( titles( data ) ).not.toContain( MARKER + ' expired' );
 	} );
 
+	test( 'shows a window that starts and ends today', async ( { request } ) => {
+		// Both bounds are whole days and inclusive. The editor's
+		// datetime-local inputs always emit a time, so a bound picked as a date
+		// arrives as midnight - and comparing that as a moment dropped the
+		// message for the whole of the day it was meant to run.
+		const today = wpEvalJson(
+			"echo wp_json_encode( current_time( 'Y-m-d' ) );"
+		);
+
+		seedMessage( 'today-only', {
+			_soli_tv_start: today + 'T00:00',
+			_soli_tv_end: today + 'T00:00',
+		} );
+
+		const { data } = await payload( request );
+		expect( titles( data ) ).toContain( MARKER + ' today-only' );
+	} );
+
+	test( 'hides a window that ended yesterday', async ( { request } ) => {
+		// The other side of the same rule: inclusive to the end of the day
+		// named, and not one day further.
+		const yesterday = wpEvalJson(
+			"echo wp_json_encode( gmdate( 'Y-m-d', strtotime( current_time( 'Y-m-d' ) . ' -1 day' ) ) );"
+		);
+
+		seedMessage( 'ended-yesterday', {
+			_soli_tv_start: '2020-01-01T00:00:00',
+			_soli_tv_end: yesterday + 'T23:59',
+		} );
+
+		const { data } = await payload( request );
+		expect( titles( data ) ).not.toContain( MARKER + ' ended-yesterday' );
+	} );
+
 	test( 'hides a message that is switched off', async ( { request } ) => {
 		seedMessage( 'switched-off', { _soli_tv_disabled: '1' } );
 

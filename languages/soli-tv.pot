@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-11T12:10:21+00:00\n"
+"POT-Creation-Date: 2026-09-11T12:24:25+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: soli-tv\n"
@@ -146,7 +146,7 @@ msgid "SOLI muziekcentrum"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-tv-slide.js:32
+#: blocks/tv-settings/src/slides/single-tv-slide.js:45
 msgid "Scan de QR!"
 msgstr ""
 
@@ -207,7 +207,7 @@ msgstr ""
 
 #: blocks/tv-settings/build/message-panel.js:1
 #: blocks/tv-settings/src/message-panel.js:117
-msgid "Buiten deze periode staat de slide niet op het scherm."
+msgid "Buiten deze periode staat de slide niet op het scherm. Beide dagen tellen volledig mee; de tijd wordt genegeerd."
 msgstr ""
 
 #: blocks/tv-settings/build/message-panel.js:1
@@ -263,12 +263,12 @@ msgid "venster verlopen – niet meer op het scherm"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:396
+#: blocks/tv-settings/src/settings-page.js:399
 msgid "verder weg – nog niet op het scherm"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:400
+#: blocks/tv-settings/src/settings-page.js:403
 msgid "geen concert – niet op het scherm"
 msgstr ""
 

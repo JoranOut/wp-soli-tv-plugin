@@ -144,7 +144,7 @@ msgid "SOLI muziekcentrum"
 msgstr "SOLI music centre"
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-tv-slide.js:32
+#: blocks/tv-settings/src/slides/single-tv-slide.js:45
 msgid "Scan de QR!"
 msgstr "Scan the QR code!"
 
@@ -205,8 +205,8 @@ msgstr "Visible until"
 
 #: blocks/tv-settings/build/message-panel.js:1
 #: blocks/tv-settings/src/message-panel.js:117
-msgid "Buiten deze periode staat de slide niet op het scherm."
-msgstr "Outside this period the slide stays off the screen."
+msgid "Buiten deze periode staat de slide niet op het scherm. Beide dagen tellen volledig mee; de tijd wordt genegeerd."
+msgstr "Outside this period the slide is not on the screen. Both days count in full; the time is ignored."
 
 #: blocks/tv-settings/build/message-panel.js:1
 #: blocks/tv-settings/src/message-panel.js:126
@@ -261,12 +261,12 @@ msgid "venster verlopen – niet meer op het scherm"
 msgstr "window has passed – no longer on the screen"
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:396
+#: blocks/tv-settings/src/settings-page.js:399
 msgid "verder weg – nog niet op het scherm"
 msgstr "further ahead – not on the screen yet"
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:400
+#: blocks/tv-settings/src/settings-page.js:403
 msgid "geen concert – niet op het scherm"
 msgstr "not a concert – not on the screen"
 

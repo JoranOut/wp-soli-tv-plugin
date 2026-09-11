@@ -19,7 +19,20 @@ export default function SingleTVSlide({slide, isActive}) {
             className={`soli-tv-block-single-slide ${slide.slide_type} ${slide.type} ${isActive ? 'is-active' : 'is-inactive'}`}
         >
             {showImage && (
-                <img className="content-image" src={slideImageUrl(slide)} alt=""/>
+                // The image sits in a frame of its own rather than being sized
+                // by the grid cell: the frame takes the whole pane and clips,
+                // and `object-fit` decides whether the image fills it (the
+                // slide's `Vullend`) or fits inside it (`Passend`). Sizing the
+                // <img> directly left the pane part background on any photo
+                // whose aspect ratio was not the pane's.
+                <div className="content-image-frame">
+                    <img
+                        className="content-image"
+                        src={slideImageUrl(slide)}
+                        style={{ objectFit: slide.fit === 'contain' ? 'contain' : 'cover' }}
+                        alt=""
+                    />
+                </div>
             )}
             {slide.content && showContent &&
                 <div className="content">
