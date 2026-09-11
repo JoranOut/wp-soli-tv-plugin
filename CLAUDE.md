@@ -240,6 +240,13 @@ row budget with it.
 The left half spells the place out in full (name, address, rooms) where the panel
 keeps the short name.
 
+A panel row aligns its date and its title at the top of the **letters**, which is
+not what any `align-items` value gives you: `start` aligns the line boxes, and
+Playfair's digits sit lower in their box than Inter's capitals do. The date
+carries a `-0.06em` nudge for it, measured as 2px against a 33px date and
+expressed in em because both columns scale with the viewport. Verified level at
+1280, 1672 and 3840 wide.
+
 Slicing the panel from the current event, which is what it did first, made it
 change under the viewer on each slide and pushed the earliest dates off it.
 
