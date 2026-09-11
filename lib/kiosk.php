@@ -176,8 +176,52 @@ function soli_tv_kiosk_payload() {
 
     return array(
         'delayMs' => max(5, (int) $settings['delay']) * 1000,
-        'slides'  => array_merge(soli_tv_kiosk_messages(), soli_tv_kiosk_events($settings)),
+        'slides'  => soli_tv_interleave_slides(
+            soli_tv_kiosk_messages(),
+            soli_tv_kiosk_events($settings)
+        ),
     );
+}
+
+/**
+ * The events in their own order, with the messages spread between them.
+ *
+ * Appending one list to the other put every message at the head of the loop, so
+ * a viewer who looked up mid-loop saw a run of announcements and then nothing
+ * but agenda for the rest of it. The events keep their order, which is the
+ * order the agenda panel prints, and each message takes a gap between two of
+ * them.
+ *
+ * The gaps are even: with `m` messages the events are cut into `m + 1` runs of
+ * roughly equal length. More messages than there is room for is not an error -
+ * the gaps fill up in order and the remainder follows at the end.
+ */
+function soli_tv_interleave_slides($messages, $events) {
+    if (!$messages || !$events) {
+        return array_merge($events, $messages);
+    }
+
+    $total = count($events);
+    $gaps = count($messages) + 1;
+    $slides = array();
+    $placed = 0;
+
+    foreach ($events as $index => $event) {
+        $slides[] = $event;
+
+        // Every message whose share of the run has been passed goes here. It
+        // is a while, not an if: a screen with two events and five messages
+        // puts several of them in the same gap.
+        while (
+            $placed < count($messages)
+            && ($placed + 1) * $total / $gaps <= $index + 1
+        ) {
+            $slides[] = $messages[$placed];
+            $placed++;
+        }
+    }
+
+    return array_merge($slides, array_slice($messages, $placed));
 }
 
 /** Published messages whose window covers today and which are not switched off. */
