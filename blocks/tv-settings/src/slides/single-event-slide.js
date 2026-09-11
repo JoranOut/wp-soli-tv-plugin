@@ -15,9 +15,6 @@ import {
 	venueFull,
 } from '../utils/event-format';
 
-/** How many dates the agenda panel lists beside the event on show. */
-const AGENDA_LENGTH = 8;
-
 export default function SingleEventSlide( { slide, isActive } ) {
 	const { getEnabledEvents } = useContext( SlidesContext );
 
@@ -27,14 +24,11 @@ export default function SingleEventSlide( { slide, isActive } ) {
 		[ slide.title ]
 	);
 
-	// The same list on every event slide: the next few dates, from the front.
-	// It used to start at the event on show and run forward, which made the
-	// panel change under the viewer on each slide and pushed the earliest dates
-	// off it. The event on show is marked where it appears instead.
-	const agenda = useMemo(
-		() => ( getEnabledEvents() || [] ).slice( 0, AGENDA_LENGTH ),
-		[ getEnabledEvents ]
-	);
+	// Every event on the screen, in start order, on every event slide. The
+	// panel is not a preview of a longer rotation: `KIOSK_EVENT_LIMIT` in
+	// lib/kiosk.php decides how many dates the screen carries at all, and these
+	// are those dates. The event on show is marked where it appears.
+	const agenda = useMemo( () => getEnabledEvents() || [], [ getEnabledEvents ] );
 
 	return (
 		<div
