@@ -54,12 +54,30 @@ function titles( data ) {
 	return data.slides.map( ( slide ) => slide.title );
 }
 
+/**
+ * Everything this file seeds, messages and events alike.
+ *
+ * Events are cleared here rather than only at the end of the test that seeded
+ * them, because a test that fails never reaches its own cleanup and its rows
+ * then sit in the next run's agenda. That is exactly how this file first broke:
+ * a deliberately failed run left four events behind, and the next run's agenda
+ * assertions read them.
+ *
+ * The event_dates delete is guarded. The table only exists where the event
+ * plugin is installed, and an unguarded DELETE against a missing table prints a
+ * wpdb error that breaks the next wp eval JSON read.
+ */
 function cleanup() {
 	wpEval(
-		"$q = new WP_Query( array( 'post_type' => 'soli_tv_message'," +
+		'global $wpdb;' +
+			' $dates = $wpdb->prefix . "event_dates";' +
+			' $has_dates = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $dates ) ) === $dates;' +
+			" $q = new WP_Query( array( 'post_type' => array( 'soli_tv_message', 'soli_event' )," +
 			" 'post_status' => 'any', 'posts_per_page' => -1, 's' => '" + MARKER + "' ) );" +
 			' foreach ( $q->posts as $p ) {' +
-			"   if ( strpos( $p->post_title, '" + MARKER + "' ) === 0 ) { wp_delete_post( $p->ID, true ); }" +
+			"   if ( strpos( $p->post_title, '" + MARKER + "' ) !== 0 ) { continue; }" +
+			'   if ( $has_dates ) { $wpdb->delete( $dates, array( "post_id" => $p->ID ) ); }' +
+			'   wp_delete_post( $p->ID, true );' +
 			' }'
 	);
 }
@@ -251,7 +269,11 @@ test.describe( 'the screen at /tv/', () => {
 		// the rest of this suite runs against whichever locale is active.
 		const slide = page
 			.locator( '.soli-tv-block-single-slide.message' )
-			.filter( { hasText: MARKER + ' two-tone' } )
+			.filter( {
+				has: page.locator( '.soli-tv-slide__title', {
+					hasText: MARKER + ' two-tone',
+				} ),
+			} )
 			.first();
 
 		await expect(
@@ -344,6 +366,52 @@ test.describe( 'the screen at /tv/', () => {
 		);
 	} );
 
+	test( 'spreads messages between the events rather than ahead of them', async ( {
+		request,
+	} ) => {
+		test.skip(
+			! eventsAvailable,
+			'wp-soli-event-plugin is not installed in this environment'
+		);
+
+		seedMessage( 'mixed' );
+
+		const seeded = wpEvalJson(
+			'global $wpdb; $ids = array();' +
+				' for ( $i = 1; $i <= 4; $i++ ) {' +
+				"   $post = wp_insert_post( array( 'post_type' => 'soli_event'," +
+				" 'post_status' => 'publish', 'post_title' => '" + MARKER + " mix ' . $i ) );" +
+				'   $wpdb->insert( $wpdb->prefix . "event_dates", array(' +
+				"     'post_id' => $post," +
+				"     'start_date' => gmdate( 'Y-m-d H:i:s', strtotime( \"+{$i} days\" ) )," +
+				"     'end_date' => gmdate( 'Y-m-d H:i:s', strtotime( \"+{$i} days\" ) + 7200 )," +
+				"     'status' => 'PUBLIC', 'is_concert' => 1 )," +
+				"     array( '%d','%s','%s','%s','%d' ) );" +
+				'   $ids[] = $post;' +
+				' }' +
+				' echo wp_json_encode( $ids );'
+		);
+
+		const { data } = await payload( request );
+		const types = data.slides.map( ( slide ) => slide.slide_type );
+		const firstMessage = types.indexOf( 'message' );
+
+		// Asserted as a property of the order, not as fixed positions: other
+		// spec files seed messages into the same screen, so the exact indices
+		// move with whatever else is published.
+		expect( types[ 0 ] ).toBe( 'event' );
+		expect( firstMessage ).toBeGreaterThan( 0 );
+		expect( types.slice( firstMessage ) ).toContain( 'event' );
+
+		wpEval(
+			'global $wpdb;' +
+				' foreach ( array( ' + seeded.join( ',' ) + ' ) as $id ) {' +
+				'   $wpdb->delete( $wpdb->prefix . "event_dates", array( "post_id" => $id ) );' +
+				'   wp_delete_post( $id, true );' +
+				' }'
+		);
+	} );
+
 	test( 'shows PUBLIC dates and leaves every other status off', async ( {
 		request,
 	} ) => {
@@ -416,9 +484,16 @@ test.describe( 'the screen at /tv/', () => {
 
 		await page.goto( '/tv/', { waitUntil: 'domcontentloaded' } );
 
+		// Found by its own title, not by text anywhere in the slide: every
+		// event slide now lists every event, so `hasText` matches all of them
+		// and `.first()` picks whichever date happens to be earliest.
 		const slide = page
 			.locator( '.soli-tv-block-single-slide.event' )
-			.filter( { hasText: MARKER + ' agenda 0' } )
+			.filter( {
+				has: page.locator( '.soli-tv-slide__title', {
+					hasText: MARKER + ' agenda 0',
+				} ),
+			} )
 			.first();
 
 		// Every event slide carries the panel, and exactly one row in it is the

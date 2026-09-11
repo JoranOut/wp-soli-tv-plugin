@@ -306,6 +306,35 @@ Capability is `edit_posts`, not `manage_options`: turning a slide off is editori
 The option's schema sets `additionalProperties: false`, so a stray key the migration picked up out
 of a block attribute is dropped rather than stored forever.
 
+### The loop mixes messages into the events
+
+`soli_tv_interleave_slides()` keeps the events in their own order, which is the
+order the agenda panel prints, and drops the messages into the gaps between
+them: with `m` messages the events are cut into `m + 1` runs of roughly equal
+length. Appending one list to the other, which is what it did first, put every
+message at the head of the loop, so anyone looking up mid-loop saw a run of
+announcements and then nothing but agenda.
+
+More messages than gaps is not an error. The gaps fill in order and the
+remainder follows at the end.
+
+`e2e/kiosk.spec.js` asserts this as a property of the order rather than as fixed
+positions: the first slide is an event, no message precedes it, and an event
+follows the first message. Other spec files publish messages into the same
+screen, so exact indices move. Putting `array_merge($messages, $events)` back
+fails that test and only that test.
+
+**A slide can no longer be found by its text.** Every event slide lists every
+event, so `filter( { hasText } )` matches all of them and `.first()` returns
+whichever date is earliest. Filter on the slide's own `.soli-tv-slide__title`
+instead. Two specs were selecting the wrong slide this way the moment the panel
+became a shared list.
+
+**The file's `cleanup()` clears the events too**, not only the test that seeded
+them. A failing test never reaches its own cleanup, and its rows then sit in the
+next run's agenda: a deliberately failed run left four events behind and the
+next run read them as its own.
+
 ### The list reaches further ahead than the screen
 
 `KIOSK_EVENT_LIMIT` (8, in `lib/kiosk.php`) is how many upcoming event dates
