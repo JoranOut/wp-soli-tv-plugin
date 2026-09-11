@@ -63,6 +63,35 @@ function seedEventWithTwoDates( title ) {
 	);
 }
 
+/**
+ * `$count` event posts, one future date each, ordered from today onwards.
+ *
+ * Used to push the list past the screen's own horizon, which is the whole point
+ * of the Instellingen list reaching further than `/tv/` does.
+ */
+function seedEventSeries( count ) {
+	return wpEvalJson(
+		'global $wpdb; $t = $wpdb->prefix . "event_dates"; $ids = array();' +
+			' for ( $i = 1; $i <= ' + count + '; $i++ ) {' +
+			"   $post = wp_insert_post( array( 'post_type' => 'soli_event'," +
+			" 'post_status' => 'publish', 'post_title' => '" + MARKER + " serie ' . $i ) );" +
+			'   $wpdb->insert( $t, array(' +
+			"     'post_id' => $post," +
+			"     'start_date' => gmdate( 'Y-m-d H:i:s', strtotime( \"+{$i} days 20:15\" ) )," +
+			"     'end_date' => gmdate( 'Y-m-d H:i:s', strtotime( \"+{$i} days 22:15\" ) )," +
+			"     'status' => 'PUBLIC', 'is_concert' => 1 )," +
+			"     array( '%d','%s','%s','%s','%d' ) );" +
+			'   $ids[] = $post;' +
+			' }' +
+			' echo wp_json_encode( $ids );'
+	);
+}
+
+/** The screen's own event cap, read from PHP rather than repeated here. */
+function kioskEventLimit() {
+	return wpEvalJson( 'echo wp_json_encode( Soli\\TV\\KIOSK_EVENT_LIMIT );' );
+}
+
 function disabledFlag( id ) {
 	return wpEvalJson(
 		'echo wp_json_encode( (bool) get_post_meta( ' + id + ", '_soli_tv_disabled', true ) );"
@@ -221,6 +250,88 @@ test.describe( 'the Instellingen screen', () => {
 				.locator( '.soli-tv-settings__row' )
 				.filter( { hasText: MARKER + ' agenda' } )
 		).toHaveCount( 1 );
+	} );
+
+	test( 'marks a switched-on message that the screen will not show', async ( {
+		page,
+	} ) => {
+		// A draft is listed here and never reaches /tv/, which reads publish
+		// only. With the switch on and no explanation that looked like a broken
+		// screen rather than an unpublished message.
+		wpEval(
+			"wp_insert_post( array( 'post_type' => 'soli_tv_message'," +
+				" 'post_status' => 'draft', 'post_title' => '" +
+				MARKER +
+				" concept' ) );" +
+				" wp_insert_post( array( 'post_type' => 'soli_tv_message'," +
+				" 'post_status' => 'publish', 'post_title' => '" +
+				MARKER +
+				" open' ) );"
+		);
+
+		await openSettings( page );
+
+		// The note is asserted by its class, never by its text: the copy is
+		// translated and this suite runs against whichever locale is active.
+		await expect(
+			row( page, MARKER + ' concept' ).locator( '.soli-tv-settings__note' )
+		).toBeVisible();
+
+		// The control: published, no window, so it is on the screen right now
+		// and must carry no note at all. `MARKER listed` is not usable here -
+		// its window is a December one, so it earns a note of its own.
+		await expect(
+			row( page, MARKER + ' open' ).locator( '.soli-tv-settings__note' )
+		).toHaveCount( 0 );
+	} );
+
+	test( 'lists events past the screen horizon, marked', async ( {
+		page,
+		request,
+	} ) => {
+		test.skip(
+			! eventsAvailable,
+			'wp-soli-event-plugin is not installed in this environment'
+		);
+
+		const limit = kioskEventLimit();
+		seedEventSeries( limit + 5 );
+
+		await openSettings( page );
+
+		const eventRows = page.locator( '[data-slide-type="event"]' );
+
+		// The list has to reach past the screen, or an event can never be
+		// switched off before it appears - which is what this exists for.
+		await expect
+			.poll( () => eventRows.count(), { timeout: 30000 } )
+			.toBeGreaterThan( limit );
+
+		// The rows beyond the horizon say so rather than looking identical to
+		// the ones that are actually on screen.
+		await expect(
+			eventRows.locator( '.soli-tv-settings__note' ).first()
+		).toBeVisible();
+
+		// And the screen itself stays capped, which is the other half of the
+		// arrangement: a longer list must not lengthen the loop.
+		const response = await request.get( '/tv/' );
+		const payload = JSON.parse(
+			/<script id="soli-tv-payload"[^>]*>([\s\S]*?)<\/script>/.exec(
+				await response.text()
+			)[ 1 ]
+		);
+		const onScreen = payload.slides
+			.filter( ( slide ) => slide.slide_type === 'event' )
+			.map( ( slide ) => slide.title );
+
+		// Identity, never a total: earlier tests in this file switch events off,
+		// so the screen legitimately carries fewer than `limit` slides and a
+		// count assertion races them. The nearest of the seeded series is on
+		// screen and the furthest is not, which is the cap itself.
+		expect( onScreen ).toContain( MARKER + ' serie 1' );
+		expect( onScreen ).not.toContain( MARKER + ' serie ' + ( limit + 5 ) );
+		expect( onScreen.length ).toBeLessThanOrEqual( limit );
 	} );
 
 	test( 'saves the delay into the soli_tv_settings option', async ( { page } ) => {

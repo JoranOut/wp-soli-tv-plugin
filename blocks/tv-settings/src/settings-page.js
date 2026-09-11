@@ -33,13 +33,20 @@ import { __, sprintf } from "@wordpress/i18n";
  */
 
 const MESSAGES_ROUTE = "/wp/v2/soli_tv_message";
-const EVENTS_ROUTE = "/soli_event/v1/events/future/1/20";
 const SETTINGS_ROUTE = "/wp/v2/settings";
 
 const globals =
   typeof window !== "undefined" && window.SoliTVSettingsPage
     ? window.SoliTVSettingsPage
     : {};
+
+// Both numbers come from PHP, where the screen's own query lives. The list
+// reaches further ahead than the screen on purpose, so an event can be switched
+// off before it ever appears: rows past the screen's horizon are marked, not
+// dropped.
+const EVENT_HORIZON = Number(globals.eventHorizon) || 100;
+const KIOSK_EVENT_LIMIT = Number(globals.kioskEventLimit) || 20;
+const EVENTS_ROUTE = `/soli_event/v1/events/future/1/${EVENT_HORIZON}`;
 
 function SettingsPage() {
   const [messages, setMessages] = useState(null);
@@ -150,7 +157,9 @@ function SettingsPage() {
 
       <SlideList
         title={__("Agenda", "soli-tv")}
-        items={dedupeById(events.map(eventToItem))}
+        items={dedupeById(
+          events.map((event, index) => eventToItem(event, index, settings)),
+        )}
         empty={
           globals.eventsPluginActive
             ? __("Geen komende activiteiten.", "soli-tv")
@@ -222,6 +231,9 @@ function SlideList({ title, items, empty, action, onError }) {
                 onChange={toggle(item)}
               />
               <span className="soli-tv-settings__meta">{item.detail}</span>
+              {enabled && item.note && (
+                <span className="soli-tv-settings__note">{item.note}</span>
+              )}
             </div>
           );
         })}
@@ -288,10 +300,55 @@ function messageToItem(message) {
     detail: window.length
       ? window.join(" – ")
       : __("altijd zichtbaar", "soli-tv"),
+    note: messageNote(message),
   };
 }
 
-function eventToItem(event) {
+/**
+ * Why a message that is switched on is still not on the screen.
+ *
+ * The list shows drafts and every window, the screen shows published messages
+ * whose window covers right now. A switch that is on and a message that never
+ * appears looked like a broken screen; it is almost always one of these three.
+ */
+function messageNote(message) {
+  if (message.status && message.status !== "publish") {
+    return __("concept – nog niet op het scherm", "soli-tv");
+  }
+
+  const now = new Date();
+  const start = parseWindowBound(message.meta?._soli_tv_start);
+  const end = parseWindowBound(message.meta?._soli_tv_end);
+
+  if (start && start > now) {
+    return __("begint later – nog niet op het scherm", "soli-tv");
+  }
+
+  if (end && end < now) {
+    return __("venster verlopen – niet meer op het scherm", "soli-tv");
+  }
+
+  return "";
+}
+
+/**
+ * A window bound as a Date, or null.
+ *
+ * The bound is stored as local wall-clock time without a zone, which is what
+ * `new Date( '2026-09-11T19:00' )` reads it as - the same reading the screen's
+ * SQL comparison makes against the site's own clock.
+ */
+function parseWindowBound(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(String(value).replace(" ", "T"));
+
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function eventToItem(event, index, settings) {
   return {
     // The switch writes to the post, so the post id is what identifies the
     // row here too. Several dates of one event therefore share a switch.
@@ -301,7 +358,27 @@ function eventToItem(event) {
     title: event.post_title || "",
     enabled: !event.disabled_on_tv,
     detail: event.start_date ? formatDate(event.start_date) : "",
+    note: eventNote(event, index, settings),
   };
+}
+
+/**
+ * Why an event that is switched on is still not on the screen.
+ *
+ * `index` is the row's place in the same start_date order the screen queries
+ * in, so everything past `KIOSK_EVENT_LIMIT` is simply too far ahead yet - the
+ * reason this list reaches further in the first place.
+ */
+function eventNote(event, index, settings) {
+  if (index >= KIOSK_EVENT_LIMIT) {
+    return __("verder weg – nog niet op het scherm", "soli-tv");
+  }
+
+  if (settings?.onlyConcerts && !event.is_concert) {
+    return __("geen concert – niet op het scherm", "soli-tv");
+  }
+
+  return "";
 }
 
 /**

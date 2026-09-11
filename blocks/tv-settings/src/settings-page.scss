@@ -33,4 +33,16 @@
 		flex-shrink: 0;
 		font-size: 12px;
 	}
+
+	// Why a row that is switched on is still not on the screen. Muted rather
+	// than a warning colour: every one of these is a normal state, not a fault.
+	&__note {
+		background: #f0f0f0;
+		border-radius: 2px;
+		color: #50575e;
+		flex-shrink: 0;
+		font-size: 11px;
+		padding: 2px 6px;
+		white-space: nowrap;
+	}
 }

@@ -222,6 +222,36 @@ Capability is `edit_posts`, not `manage_options`: turning a slide off is editori
 The option's schema sets `additionalProperties: false`, so a stray key the migration picked up out
 of a block attribute is dropped rather than stored forever.
 
+### The list reaches further ahead than the screen
+
+`KIOSK_EVENT_LIMIT` (20, in `lib/kiosk.php`) is how many upcoming event dates
+`/tv/` carries. `SETTINGS_EVENT_HORIZON` (100, in `lib/settings_page.php`) is how
+far the `Instellingen` list reaches. The gap is the point: an event that is still
+beyond the screen's horizon has to be listed, or nobody can switch it off before
+it appears. Both numbers are localised to the settings bundle so the two cannot
+drift apart — the JS never hardcodes either.
+
+A row past `KIOSK_EVENT_LIMIT` is marked rather than hidden, and so is any row
+whose switch is on while the screen still will not show it:
+
+| Marked | Because the screen |
+|--------|--------------------|
+| draft message | queries `post_status = publish` |
+| window not started / passed | compares both bounds against now |
+| event past the horizon | takes the first `KIOSK_EVENT_LIMIT` dates |
+| non-concert while `onlyConcerts` is on | filters those out |
+
+Without those markers a switch that is on and a slide that never appears read as
+a broken screen. They are the first thing to look at when someone reports a
+message missing from `/tv/`.
+
+Two known mismatches are **not** marked, because the list and the screen ask
+different questions of the event plugin: the endpoint filters on
+`end_date >= now` and on the date's own `status`, while `soli_tv_kiosk_events()`
+filters on `start_date >= now` and ignores `status` entirely. So an event that has
+already begun, or one the agenda considers cancelled, can be listed and not shown
+or shown and not listed.
+
 ### An event id is not a post id
 
 `soli_event/v1/events/future/...` answers `{ events, totalEvents, totalPages }` — not an array —

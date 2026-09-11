@@ -30,6 +30,16 @@ const KIOSK_PATH = 'tv';
 /** Bumped whenever the rewrite rule changes, to force one flush. */
 const KIOSK_REWRITE_VERSION = '1';
 
+/**
+ * How many upcoming event dates the screen carries.
+ *
+ * The `Instellingen` list deliberately reaches further than this (see
+ * `SETTINGS_EVENT_HORIZON`) so an event can be switched off before it ever
+ * comes into view. The screen itself stays short: at 20 seconds a slide, 20
+ * dates is already a seven-minute loop.
+ */
+const KIOSK_EVENT_LIMIT = 20;
+
 add_action('init', 'Soli\TV\soli_tv_add_kiosk_route', 8);
 add_filter('query_vars', 'Soli\TV\soli_tv_register_kiosk_query_var');
 add_action('template_redirect', 'Soli\TV\soli_tv_maybe_render_kiosk');
@@ -243,8 +253,9 @@ function soli_tv_kiosk_events($settings) {
          WHERE p.post_status = 'publish'
            AND d.start_date >= %s
          ORDER BY d.start_date ASC
-         LIMIT 20",
-        current_time('mysql')
+         LIMIT %d",
+        current_time('mysql'),
+        KIOSK_EVENT_LIMIT
     ), ARRAY_A);
 
     $slides = array();
