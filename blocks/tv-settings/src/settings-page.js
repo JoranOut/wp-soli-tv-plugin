@@ -48,6 +48,19 @@ const EVENT_HORIZON = Number(globals.eventHorizon) || 100;
 const KIOSK_EVENT_LIMIT = Number(globals.kioskEventLimit) || 20;
 const EVENTS_ROUTE = `/soli_event/v1/events/future/1/${EVENT_HORIZON}`;
 
+/**
+ * The wp-admin edit screen for one post.
+ *
+ * Every row in the list is a post - a message or an event - and the reason to
+ * open one from here is the same in both cases: the switch says whether it goes
+ * on the screen, everything else about it is edited on the post itself.
+ */
+function editUrl(id) {
+  const template = globals.editUrlTemplate;
+
+  return template && id ? template.replace("__ID__", String(id)) : "";
+}
+
 function SettingsPage() {
   const [messages, setMessages] = useState(null);
   const [events, setEvents] = useState([]);
@@ -234,6 +247,11 @@ function SlideList({ title, items, empty, action, onError }) {
               {enabled && item.note && (
                 <span className="soli-tv-settings__note">{item.note}</span>
               )}
+              {item.editUrl && (
+                <a className="soli-tv-settings__edit" href={item.editUrl}>
+                  {__("bewerken", "soli-tv")}
+                </a>
+              )}
             </div>
           );
         })}
@@ -301,6 +319,7 @@ function messageToItem(message) {
       ? window.join(" – ")
       : __("altijd zichtbaar", "soli-tv"),
     note: messageNote(message),
+    editUrl: editUrl(message.id),
   };
 }
 
@@ -359,6 +378,9 @@ function eventToItem(event, index, settings) {
     enabled: !event.disabled_on_tv,
     detail: event.start_date ? formatDate(event.start_date) : "",
     note: eventNote(event, index, settings),
+    // The event post, not the date row: the date row has no edit screen and
+    // its id would open whatever unrelated post carries that number.
+    editUrl: editUrl(Number(event.post_id)),
   };
 }
 

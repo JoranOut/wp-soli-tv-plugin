@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-11T12:01:11+00:00\n"
+"POT-Creation-Date: 2026-09-11T12:10:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: soli-tv\n"
@@ -38,7 +38,7 @@ msgstr ""
 #: lib/post_type.php:47
 #: lib/post_type.php:59
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:145
+#: blocks/tv-settings/src/settings-page.js:158
 msgid "Tv berichten"
 msgstr ""
 
@@ -50,7 +50,7 @@ msgstr ""
 
 #: lib/post_type.php:49
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:151
+#: blocks/tv-settings/src/settings-page.js:164
 msgid "Nieuw bericht"
 msgstr ""
 
@@ -135,7 +135,7 @@ msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:159
+#: blocks/tv-settings/src/settings-page.js:172
 #: blocks/tv-settings/src/slides/single-event-slide.js:28
 msgid "Agenda"
 msgstr ""
@@ -227,93 +227,98 @@ msgstr ""
 
 #. translators: %s: title of the slide.
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:201
+#: blocks/tv-settings/src/settings-page.js:214
 #, js-format
 msgid "%s kon niet worden bijgewerkt."
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:229
+#: blocks/tv-settings/src/settings-page.js:242
 msgid "(zonder titel)"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:302
+#: blocks/tv-settings/src/settings-page.js:252
+msgid "bewerken"
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:320
 msgid "altijd zichtbaar"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:316
+#: blocks/tv-settings/src/settings-page.js:335
 msgid "concept – nog niet op het scherm"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:324
+#: blocks/tv-settings/src/settings-page.js:343
 msgid "begint later – nog niet op het scherm"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:328
+#: blocks/tv-settings/src/settings-page.js:347
 msgid "venster verlopen – niet meer op het scherm"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:374
+#: blocks/tv-settings/src/settings-page.js:396
 msgid "verder weg – nog niet op het scherm"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:378
+#: blocks/tv-settings/src/settings-page.js:400
 msgid "geen concert – niet op het scherm"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:68
+#: blocks/tv-settings/src/settings-page.js:81
 msgid "Berichten laden mislukte."
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:74
+#: blocks/tv-settings/src/settings-page.js:87
 msgid "Instellingen laden mislukte."
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:97
+#: blocks/tv-settings/src/settings-page.js:110
 msgid "Instellingen opslaan mislukte."
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:104
-#: blocks/tv-settings/src/settings-page.js:112
+#: blocks/tv-settings/src/settings-page.js:117
+#: blocks/tv-settings/src/settings-page.js:125
 msgid "Tv instellingen"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:122
+#: blocks/tv-settings/src/settings-page.js:135
 msgid "Weergave"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:127
+#: blocks/tv-settings/src/settings-page.js:140
 msgid "Seconden per slide"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:135
+#: blocks/tv-settings/src/settings-page.js:148
 msgid "Alleen concerten uit de agenda"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:147
+#: blocks/tv-settings/src/settings-page.js:160
 msgid "Nog geen tv berichten."
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:165
+#: blocks/tv-settings/src/settings-page.js:178
 msgid "Geen komende activiteiten."
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:166
+#: blocks/tv-settings/src/settings-page.js:179
 msgid "De agenda-plugin is niet actief, dus er staan geen activiteiten op het scherm."
 msgstr ""
