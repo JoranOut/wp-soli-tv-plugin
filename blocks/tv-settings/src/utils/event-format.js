@@ -89,3 +89,26 @@ export function venue( event, houseName ) {
 
 	return '';
 }
+
+/**
+ * The same place, spelled out.
+ *
+ * The event slide has room for the address and the rooms as well, and someone
+ * standing in the hall reading about a concert elsewhere needs them. The agenda
+ * panel beside it keeps the short form, where eight rows share the space.
+ */
+export function venueFull( event, houseName ) {
+	const parts = [ venue( event, houseName ) ];
+
+	if ( event?.location && event?.locationAddress ) {
+		parts.push( event.locationAddress );
+	}
+
+	const rooms = displayRooms( event?.rooms );
+
+	if ( rooms ) {
+		parts.push( rooms );
+	}
+
+	return parts.filter( Boolean ).join( ', ' );
+}
