@@ -174,38 +174,29 @@ function soli_tv_kiosk_payload() {
     );
 }
 
-/** Published messages whose window covers now and which are not switched off. */
+/** Published messages whose window covers today and which are not switched off. */
 function soli_tv_kiosk_messages() {
-    $now = current_time('mysql');
+    $today = substr(current_time('mysql'), 0, 10);
 
     $posts = get_posts(array(
         'post_type'      => 'soli_tv_message',
         'post_status'    => 'publish',
         'posts_per_page' => -1,
         'orderby'        => array('menu_order' => 'ASC', 'title' => 'ASC'),
-        // A message with no window is always on, so the comparison cannot be a
-        // plain meta_query on the bound alone: an absent key has to pass too.
-        'meta_query'     => array(
-            'relation' => 'AND',
-            array(
-                'relation' => 'OR',
-                array('key' => '_soli_tv_start', 'compare' => 'NOT EXISTS'),
-                array('key' => '_soli_tv_start', 'value' => '', 'compare' => '='),
-                array('key' => '_soli_tv_start', 'value' => soli_tv_to_meta_datetime($now), 'compare' => '<='),
-            ),
-            array(
-                'relation' => 'OR',
-                array('key' => '_soli_tv_end', 'compare' => 'NOT EXISTS'),
-                array('key' => '_soli_tv_end', 'value' => '', 'compare' => '='),
-                array('key' => '_soli_tv_end', 'value' => soli_tv_to_meta_datetime($now), 'compare' => '>='),
-            ),
-        ),
     ));
 
     $slides = array();
 
     foreach ($posts as $post) {
         if (get_post_meta($post->ID, '_soli_tv_disabled', true)) {
+            continue;
+        }
+
+        if (!soli_tv_window_covers_day(
+            get_post_meta($post->ID, '_soli_tv_start', true),
+            get_post_meta($post->ID, '_soli_tv_end', true),
+            $today
+        )) {
             continue;
         }
 
@@ -227,6 +218,36 @@ function soli_tv_kiosk_messages() {
     }
 
     return $slides;
+}
+
+/**
+ * Whether a window covers `$day`, both bounds inclusive and whole days.
+ *
+ * The time part of a bound is deliberately ignored. "tot 11 september" means
+ * the whole of the 11th, and the editor's `datetime-local` inputs always emit
+ * some time - so a bound picked as a date came through as midnight and dropped
+ * the message for that entire day, which is how a window ending today looked
+ * exclusive.
+ *
+ * An empty or absent bound is open in that direction, so a message with no
+ * window at all is always on. This is a PHP filter rather than a meta_query:
+ * an absent bound has no meta row, so each side needed an OR of NOT EXISTS,
+ * empty and the comparison - and the comparison itself was a string compare in
+ * SQL, which cannot express "same day" without slicing the value first.
+ */
+function soli_tv_window_covers_day($start, $end, $day) {
+    $from = substr((string) $start, 0, 10);
+    $to   = substr((string) $end, 0, 10);
+
+    if ($from !== '' && $from > $day) {
+        return false;
+    }
+
+    if ($to !== '' && $to < $day) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -293,15 +314,4 @@ function soli_tv_kiosk_events($settings) {
     }
 
     return $slides;
-}
-
-/**
- * `Y-m-d H:i:s` as the `T`-separated string the window meta is stored in.
- *
- * The comparison has to happen in the stored format, because it is a string
- * comparison in SQL: `2026-09-10T19:00:00` and `2026-09-10 19:00:00` sort
- * differently around the separator.
- */
-function soli_tv_to_meta_datetime($mysql_datetime) {
-    return str_replace(' ', 'T', $mysql_datetime);
 }

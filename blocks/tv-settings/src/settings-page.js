@@ -335,15 +335,15 @@ function messageNote(message) {
     return __("concept – nog niet op het scherm", "soli-tv");
   }
 
-  const now = new Date();
-  const start = parseWindowBound(message.meta?._soli_tv_start);
-  const end = parseWindowBound(message.meta?._soli_tv_end);
+  const today = localDay(new Date());
+  const from = windowDay(message.meta?._soli_tv_start);
+  const to = windowDay(message.meta?._soli_tv_end);
 
-  if (start && start > now) {
+  if (from && from > today) {
     return __("begint later – nog niet op het scherm", "soli-tv");
   }
 
-  if (end && end < now) {
+  if (to && to < today) {
     return __("venster verlopen – niet meer op het scherm", "soli-tv");
   }
 
@@ -351,20 +351,23 @@ function messageNote(message) {
 }
 
 /**
- * A window bound as a Date, or null.
+ * The date half of a window bound, or "".
  *
- * The bound is stored as local wall-clock time without a zone, which is what
- * `new Date( '2026-09-11T19:00' )` reads it as - the same reading the screen's
- * SQL comparison makes against the site's own clock.
+ * Both bounds are whole days and inclusive on the screen, so the time part is
+ * dropped here too - a note that disagreed with what /tv/ does would be worse
+ * than no note.
  */
-function parseWindowBound(value) {
-  if (!value) {
-    return null;
-  }
+function windowDay(value) {
+  return String(value || "").slice(0, 10);
+}
 
-  const date = new Date(String(value).replace(" ", "T"));
-
-  return isNaN(date.getTime()) ? null : date;
+/** Today as `YYYY-MM-DD` in the browser's own timezone, never UTC. */
+function localDay(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 function eventToItem(event, index, settings) {
