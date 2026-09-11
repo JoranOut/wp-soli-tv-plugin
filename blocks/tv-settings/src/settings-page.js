@@ -2,6 +2,7 @@ import "./settings-page.scss";
 import {
   createRoot,
   useEffect,
+  useMemo,
   useState,
   useCallback,
 } from "@wordpress/element";
@@ -99,6 +100,19 @@ function SettingsPage() {
     }
   }, []);
 
+  // Which events have a date the screen would accept at all. A post can own
+  // several dates and only some of them public, so this is computed over every
+  // row before they are collapsed into one switch per post.
+  const publicPostIds = useMemo(
+    () =>
+      new Set(
+        events
+          .filter((event) => !event.status || event.status === "PUBLIC")
+          .map((event) => Number(event.post_id)),
+      ),
+    [events],
+  );
+
   const saveSettings = useCallback((next) => {
     setSettings(next);
 
@@ -171,7 +185,9 @@ function SettingsPage() {
       <SlideList
         title={__("Agenda", "soli-tv")}
         items={dedupeById(
-          events.map((event, index) => eventToItem(event, index, settings)),
+          events.map((event, index) =>
+            eventToItem(event, index, settings, publicPostIds),
+          ),
         )}
         empty={
           globals.eventsPluginActive
@@ -370,7 +386,7 @@ function localDay(date) {
   ].join("-");
 }
 
-function eventToItem(event, index, settings) {
+function eventToItem(event, index, settings, publicPostIds) {
   return {
     // The switch writes to the post, so the post id is what identifies the
     // row here too. Several dates of one event therefore share a switch.
@@ -380,7 +396,7 @@ function eventToItem(event, index, settings) {
     title: event.post_title || "",
     enabled: !event.disabled_on_tv,
     detail: event.start_date ? formatDate(event.start_date) : "",
-    note: eventNote(event, index, settings),
+    note: eventNote(event, index, settings, publicPostIds),
     // The event post, not the date row: the date row has no edit screen and
     // its id would open whatever unrelated post carries that number.
     editUrl: editUrl(Number(event.post_id)),
@@ -394,13 +410,20 @@ function eventToItem(event, index, settings) {
  * in, so everything past `KIOSK_EVENT_LIMIT` is simply too far ahead yet - the
  * reason this list reaches further in the first place.
  */
-function eventNote(event, index, settings) {
-  if (index >= KIOSK_EVENT_LIMIT) {
-    return __("verder weg – nog niet op het scherm", "soli-tv");
+function eventNote(event, index, settings, publicPostIds) {
+  // The screen shows PUBLIC dates only. This list is read by editors, whose
+  // view of the agenda includes options, bookings awaiting approval and
+  // private dates, so it says which of those will never reach the screen.
+  if (publicPostIds && !publicPostIds.has(Number(event.post_id))) {
+    return __("niet openbaar – niet op het scherm", "soli-tv");
   }
 
   if (settings?.onlyConcerts && !event.is_concert) {
     return __("geen concert – niet op het scherm", "soli-tv");
+  }
+
+  if (index >= KIOSK_EVENT_LIMIT) {
+    return __("verder weg – nog niet op het scherm", "soli-tv");
   }
 
   return "";

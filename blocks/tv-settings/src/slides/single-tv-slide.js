@@ -64,10 +64,6 @@ export default function SingleTVSlide( { slide, isActive } ) {
 			{ showContent && (
 				<div className="soli-tv-slide__inner">
 					<div className="soli-tv-slide__content">
-						<span
-							className="soli-tv-slide__rule"
-							aria-hidden="true"
-						/>
 						<h1 className="soli-tv-slide__title">
 							{ lead && (
 								<span className="soli-tv-slide__title-lead">
@@ -78,6 +74,10 @@ export default function SingleTVSlide( { slide, isActive } ) {
 								{ accent }
 							</span>
 						</h1>
+						<span
+							className="soli-tv-slide__rule"
+							aria-hidden="true"
+						/>
 						{ slide.content && (
 							<div className="soli-tv-slide__lead">
 								<RawHTML>{ slide.content }</RawHTML>

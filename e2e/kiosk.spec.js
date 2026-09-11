@@ -344,6 +344,50 @@ test.describe( 'the screen at /tv/', () => {
 		);
 	} );
 
+	test( 'shows PUBLIC dates and leaves every other status off', async ( {
+		request,
+	} ) => {
+		test.skip(
+			! eventsAvailable,
+			'wp-soli-event-plugin is not installed in this environment'
+		);
+
+		// The screen hangs in a public hall: an option, a date awaiting
+		// approval and a private booking are all agenda states that are not for
+		// that audience, and only the first of these four belongs on it.
+		const seeded = wpEvalJson(
+			'global $wpdb; $ids = array();' +
+				" foreach ( array( 'PUBLIC', 'OPTION', 'PENDING_APPROVAL', 'PRIVATE' ) as $i => $status ) {" +
+				"   $post = wp_insert_post( array( 'post_type' => 'soli_event'," +
+				" 'post_status' => 'publish', 'post_title' => '" + MARKER + " status ' . $status ) );" +
+				'   $wpdb->insert( $wpdb->prefix . "event_dates", array(' +
+				"     'post_id' => $post," +
+				"     'start_date' => gmdate( 'Y-m-d H:i:s', strtotime( '+' . ( $i + 2 ) . ' days' ) )," +
+				"     'end_date' => gmdate( 'Y-m-d H:i:s', strtotime( '+' . ( $i + 2 ) . ' days' ) + 7200 )," +
+				"     'status' => $status, 'is_concert' => 1 )," +
+				"     array( '%d','%s','%s','%s','%d' ) );" +
+				'   $ids[] = $post;' +
+				' }' +
+				' echo wp_json_encode( $ids );'
+		);
+
+		const { data } = await payload( request );
+		const shown = titles( data );
+
+		expect( shown ).toContain( MARKER + ' status PUBLIC' );
+		expect( shown ).not.toContain( MARKER + ' status OPTION' );
+		expect( shown ).not.toContain( MARKER + ' status PENDING_APPROVAL' );
+		expect( shown ).not.toContain( MARKER + ' status PRIVATE' );
+
+		wpEval(
+			'global $wpdb;' +
+				' foreach ( array( ' + seeded.join( ',' ) + ' ) as $id ) {' +
+				'   $wpdb->delete( $wpdb->prefix . "event_dates", array( "post_id" => $id ) );' +
+				'   wp_delete_post( $id, true );' +
+				' }'
+		);
+	} );
+
 	test( 'renders an event beside the agenda, with its own row marked', async ( {
 		page,
 	} ) => {
