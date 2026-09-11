@@ -22,6 +22,16 @@ if (!defined('ABSPATH')) exit;
 
 const SETTINGS_OPTION = 'soli_tv_settings';
 
+/**
+ * How far ahead the `Instellingen` list reaches, in event dates.
+ *
+ * Deliberately larger than `KIOSK_EVENT_LIMIT`: the point of the list is to
+ * switch an event off *before* it reaches the screen, which is impossible when
+ * the list stops exactly where the screen does. Rows past the screen's own
+ * horizon are marked rather than hidden.
+ */
+const SETTINGS_EVENT_HORIZON = 100;
+
 const SETTINGS_DEFAULT = array(
     'delay'          => 20,
     'onlyConcerts'   => true,
@@ -134,5 +144,9 @@ function soli_tv_enqueue_settings_page($hook_suffix) {
     wp_localize_script('soli-tv-settings-page', 'SoliTVSettingsPage', array(
         'eventsPluginActive' => is_plugin_active('wp-soli-event-plugin/soli-event-plugin.php'),
         'newMessageUrl'      => admin_url('post-new.php?post_type=soli_tv_message'),
+        // Both horizons come from PHP so the screen and this list cannot drift
+        // apart: one of them is what /tv/ actually queries.
+        'eventHorizon'       => SETTINGS_EVENT_HORIZON,
+        'kioskEventLimit'    => KIOSK_EVENT_LIMIT,
     ));
 }
