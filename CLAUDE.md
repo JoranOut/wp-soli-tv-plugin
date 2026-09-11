@@ -278,6 +278,30 @@ Two CSS traps, both measured while building this:
 The screen formats dates in Dutch and does not follow the viewer's locale: it
 hangs in Driehuis and has one audience. The admin screens are the opposite case.
 
+### The scrim is tuned against a white photo
+
+`--soli-tv-scrim` is the one gradient the plugin applies: `--soli-tv-ink` at
+0.94 / 0.86 / 0.24 / 0.04 across 0 / 46 / 74 / 100%, running at 100deg. It is
+the concert hero's overlay, steepened, because this screen carries more text
+over its photo and is read from across a hall.
+
+The stops are set by measurement, not taste, and the test case is a **near-white
+photo**: a scrim that reads well over a dark one can still be far too heavy over
+a bright one, which is what the first version was. Render a white image, then
+sample the composited pixels and compute contrast against `--soli-tv-cream`.
+
+At 1672 wide, where the text runs to x=710:
+
+| | first version | now |
+|---|---|---|
+| behind the text | 13.4:1 | 13.6:1 |
+| just past the text (x=780) | 7.3:1 | 10.7:1 |
+| right edge, 250-white photo | 182 | 227 |
+
+The dense part holds to 46%, which is past where the text ends, and only then
+falls away. Moving that stop in makes the photo brighter and the last line of
+copy worse, so measure both ends when touching it.
+
 ### The image owns its pane
 
 `img_text` puts the image in a `.content-image-frame` of its own inside the left grid cell. The
