@@ -267,10 +267,22 @@ function soli_tv_kiosk_events($settings) {
         return array();
     }
 
+    // The location name is a second table of the event plugin's, and a site can
+    // have event_dates without it. Joining a missing table fails the whole
+    // query, so the join is only added once it is known to be there.
+    $locations = $wpdb->prefix . 'event_location';
+    $has_locations = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $locations)) === $locations;
+
+    $location_select = $has_locations ? ', l.name AS location_name' : '';
+    $location_join = $has_locations
+        ? "LEFT JOIN {$locations} l ON l.id = d.location"
+        : '';
+
     $rows = $wpdb->get_results($wpdb->prepare(
-        "SELECT d.id, d.post_id, d.start_date, d.end_date, d.rooms, d.is_concert
+        "SELECT d.id, d.post_id, d.start_date, d.end_date, d.rooms, d.is_concert{$location_select}
          FROM {$table} d
          INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id
+         {$location_join}
          WHERE p.post_status = 'publish'
            AND d.start_date >= %s
          ORDER BY d.start_date ASC
@@ -309,6 +321,7 @@ function soli_tv_kiosk_events($settings) {
             'startDate'  => $row['start_date'],
             'endDate'    => $row['end_date'],
             'rooms'      => $row['rooms'] ? json_decode($row['rooms'], true) : null,
+            'location'   => isset($row['location_name']) ? $row['location_name'] : '',
             'link'       => get_permalink($post),
         );
     }

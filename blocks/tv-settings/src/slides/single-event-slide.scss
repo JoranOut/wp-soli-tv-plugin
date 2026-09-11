@@ -1,130 +1,172 @@
+// An event slide: the event itself on the left in the same treatment a message
+// gets, the agenda beside it on a paper panel.
 .soli-tv-block-single-slide.event {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  height: 100%;
-  width: 100%;
+	background: var(--soli-tv-ink);
+	display: grid;
+	grid-template-columns: 1fr minmax(360px, 32%);
+	height: 100%;
+	width: 100%;
+}
 
-  .featured-events {
-    display: grid;
-    grid-template-columns: min-content min-content 1fr;
-    grid-auto-rows: min-content;
-    min-width: 450px;
-    gap: 10px;
-    position: relative;
-    padding: 20px;
-    box-shadow: -20px 0px 80px 0px #000;
+.soli-tv-event__feature {
+	overflow: hidden;
+	position: relative;
+}
 
-    >h1 {
-      grid-column: 1 / span 3;
-    }
+.soli-tv-event__logo {
+	height: clamp(64px, 9vh, 120px);
+	left: 7%;
+	opacity: 0.92;
+	position: absolute;
+	top: 6vh;
+	width: auto;
+	z-index: 1;
+}
 
-    .featured-event {
-      padding: 10px;
-      min-width: 450px;
-      display: grid;
-      grid-column: 1 / span 3;
-      grid-template-columns: subgrid;
-      grid-template-areas:  "startdate line title"
-                            "starttime line location";
-      gap: 20px;
-      margin: 5px 0;
+// The event title sits at the foot of its half rather than centred: the logo
+// holds the top and the agenda panel beside it reads top-down.
+//
+// Selected through the slide, not on the class alone: the element carries
+// `soli-tv-slide__inner` as well, which centres, and two single-class rules of
+// equal specificity leave the winner to the order the bundles happen to be
+// concatenated in.
+.soli-tv-block-single-slide.event .soli-tv-event__inner {
+	justify-content: flex-end;
+	padding: 6vh 8% 7vh 7%;
+}
 
-      .startdate {
-        grid-area: startdate;
-        white-space: nowrap;
-        margin: 0;
-      }
+.soli-tv-event__meta {
+	align-items: center;
+	color: var(--soli-tv-lead);
+	display: flex;
+	flex-wrap: wrap;
+	font-family: var(--soli-tv-font-sans);
+	font-size: clamp(14px, 1.15vw, 22px);
+	gap: 0.8em 2.4em;
+	margin: 3.4vh 0 0;
+}
 
-      .starttime {
-        grid-area: starttime;
-        white-space: nowrap;
-        margin: 0;
-      }
+.soli-tv-event__meta-item {
+	align-items: center;
+	display: flex;
+	gap: 0.6em;
 
-      .line {
-        grid-area: line;
-        background: darkred;
-        width: 5px;
-      }
+	dt {
+		align-items: center;
+		display: flex;
+		margin: 0;
+	}
 
-      .title {
-        grid-area: title;
-        font-weight: bold;
-        margin: 0;
-      }
+	dd {
+		margin: 0;
+		white-space: nowrap;
+	}
+}
 
-      .location {
-        grid-area: location;
-        font-style: italic;
-        margin: 0;
-      }
-    }
+.soli-tv-event__icon {
+	color: var(--soli-tv-gold);
+	height: 1.5em;
+	width: 1.5em;
+}
 
-    :not(.central-border) {
-      z-index: 1;
-      position: relative;
-    }
-  }
+.soli-tv-agenda {
+	background: var(--soli-tv-cream);
+	color: var(--soli-tv-ink);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	padding: 5vh 2.4vw;
+}
 
-  .single-event {
-    position: relative;
-    overflow: hidden;
+.soli-tv-agenda__heading {
+	border-bottom: 3px solid var(--soli-tv-gold);
+	font-family: var(--soli-tv-font-display);
+	font-size: clamp(26px, 2.3vw, 46px);
+	font-weight: 700;
+	line-height: 1.1;
+	margin: 0 0 2.6vh;
+	padding-bottom: 0.4em;
+}
 
-    .content-image {
-      min-width: 100%;
-      min-height: 100%;
-      position: relative;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-    }
+.soli-tv-agenda__list {
+	display: flex;
+	flex-direction: column;
+	list-style: none;
+	margin: 0;
+	// The panel is a fixed height and the list must not spill out of it: the
+	// rows share what space there is rather than the last one being cut in half.
+	min-height: 0;
+	padding: 0;
+}
 
-    .content {
-      background: white;
-      display: block;
-      width: 70%;
-      position: absolute;
-      bottom: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 40px;
+.soli-tv-agenda__item {
+	align-items: baseline;
+	border-bottom: 1px solid var(--soli-tv-line);
+	display: grid;
+	gap: 0 1.4vw;
+	grid-template-columns: minmax(52px, auto) 1fr;
+	padding: 1.5vh 0.8vw;
 
-      &::after {
-        --w: 7px;
-        display: block;
-        content: "";
-        width: calc(100% + 2 * var(--w));
-        height: calc(100% + 2 * var(--w));
-        top: calc(-2 * var(--w));
-        left: calc(-2 * var(--w));
-        position: absolute;
-        border: calc(var(--w)) solid #fff;
-        z-index: -1;
-      }
-    }
-  }
+	&:last-child {
+		border-bottom: 0;
+	}
 
-  .central-border {
-    position: absolute;
-    left: calc(var(--s) * -2);
-    top: calc(var(--s) * -2);
-    height: calc(100% + calc(var(--s) * 4));
-  }
+	// The event the other half of the slide is about.
+	&.is-current {
+		background: rgba(201, 162, 74, 0.16);
+		border-bottom-color: transparent;
+		box-shadow: inset 4px 0 0 var(--soli-tv-gold);
 
-  .wavy-border {
-    --s: 30px;
-    --w: 100px;
-    width: round(var(--w), 4 * var(--s));
-    aspect-ratio: 1;
-    border: var(--s) solid rgba(0, 0, 0, 0);
-    box-sizing: border-box;
+		.soli-tv-agenda__title {
+			color: var(--soli-tv-maroon);
+		}
+	}
+}
 
-    overflow: hidden;
-    background: var(--src) center / cover no-repeat border-box, conic-gradient(#CD8C52, #5E9FA3, #CD8C52) border-box;
-    background-image: linear-gradient(45deg, white, white);
+.soli-tv-agenda__when {
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+}
 
-    mask: radial-gradient(calc(sqrt(2) * var(--s)), #000 calc(100% - 1px), #0000),
-    radial-gradient(calc(sqrt(2) * var(--s)), #0000 100%, #000 calc(100% + 1px)) var(--s) var(--s) padding-box;
-    mask-size: calc(var(--s) * 4) calc(var(--s) * 4);
-  }
+.soli-tv-agenda__day {
+	font-family: var(--soli-tv-font-display);
+	font-size: clamp(24px, 2vw, 40px);
+	font-weight: 700;
+	line-height: 1;
+}
+
+.soli-tv-agenda__month {
+	color: var(--soli-tv-muted);
+	font-family: var(--soli-tv-font-sans);
+	font-size: clamp(10px, 0.75vw, 15px);
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+}
+
+.soli-tv-agenda__title {
+	font-family: var(--soli-tv-font-sans);
+	font-size: clamp(15px, 1.2vw, 24px);
+	font-weight: 600;
+	line-height: 1.25;
+	margin: 0;
+}
+
+.soli-tv-agenda__detail {
+	color: var(--soli-tv-muted);
+	font-family: var(--soli-tv-font-sans);
+	font-size: clamp(13px, 1vw, 20px);
+	line-height: 1.4;
+	margin: 0.2em 0 0;
+}
+
+// Visually hidden, still read out: the icons carry the meaning of each meta row.
+.screen-reader-text {
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
 }
