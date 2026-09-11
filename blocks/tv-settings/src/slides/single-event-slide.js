@@ -62,10 +62,6 @@ export default function SingleEventSlide( { slide, isActive } ) {
 
 				<div className="soli-tv-slide__inner soli-tv-event__inner">
 					<div className="soli-tv-slide__content">
-						<span
-							className="soli-tv-slide__rule"
-							aria-hidden="true"
-						/>
 						<h1 className="soli-tv-slide__title">
 							{ lead && (
 								<span className="soli-tv-slide__title-lead">
@@ -76,6 +72,10 @@ export default function SingleEventSlide( { slide, isActive } ) {
 								{ accent }
 							</span>
 						</h1>
+						<span
+							className="soli-tv-slide__rule"
+							aria-hidden="true"
+						/>
 
 						<dl className="soli-tv-event__meta">
 							<div className="soli-tv-event__meta-item">

@@ -241,6 +241,10 @@ itself with percentage padding. Without it the message title's column came out
 
 Two CSS traps, both measured while building this:
 
+- **`object-fit` belongs in the stylesheet, not only on the element.** The
+  `<img>` default is `fill`, which stretches. A message overrides it inline for
+  `Passend`; the event slide sets nothing, so its photo was stretched until
+  `cover` became the declared default.
 - **A grid row sizes to its tallest item.** The image frame is `height: 100%` of
   its row, so a 1600×500 photo gave the row 200px and the image covered a fifth
   of the pane. `grid-template-rows: 100%` on the slide fixes it.
@@ -310,12 +314,18 @@ Without those markers a switch that is on and a slide that never appears read as
 a broken screen. They are the first thing to look at when someone reports a
 message missing from `/tv/`.
 
-Two known mismatches are **not** marked, because the list and the screen ask
-different questions of the event plugin: the endpoint filters on
-`end_date >= now` and on the date's own `status`, while `soli_tv_kiosk_events()`
-filters on `start_date >= now` and ignores `status` entirely. So an event that has
-already begun, or one the agenda considers cancelled, can be listed and not shown
-or shown and not listed.
+The screen carries **PUBLIC dates only**. An option, a date awaiting approval and
+a private booking are agenda states, and the screen hangs in a public hall. That
+is the rule the event plugin's own iCal feed applies, and it is stricter than its
+REST endpoint, which widens what an editor sees: the `Instellingen` list is read
+by editors, so a post with no public date among its rows is marked rather than
+hidden. The `status` column is checked with `SHOW COLUMNS` before it is used,
+because an unknown column fails the whole query and would empty the agenda
+instead of narrowing it.
+
+One mismatch is left: the endpoint filters on `end_date >= now` and
+`soli_tv_kiosk_events()` on `start_date >= now`, so an event that has already
+begun is listed while the screen has dropped it.
 
 ### An event id is not a post id
 

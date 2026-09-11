@@ -278,12 +278,28 @@ function soli_tv_kiosk_events($settings) {
         ? "LEFT JOIN {$locations} l ON l.id = d.location"
         : '';
 
+    // The screen hangs in a public hall, so it shows PUBLIC dates and nothing
+    // else - an option, a date awaiting approval or a private booking is not
+    // for that audience. This is the same rule the event plugin applies to its
+    // own iCal feed, and stricter than its REST endpoint, which widens what an
+    // editor sees.
+    //
+    // The column is checked rather than assumed: an unknown column fails the
+    // whole query, which would empty the agenda instead of narrowing it.
+    $has_status = (bool) $wpdb->get_var($wpdb->prepare(
+        "SHOW COLUMNS FROM {$table} LIKE %s",
+        'status'
+    ));
+
+    $status_where = $has_status ? "AND d.status = 'PUBLIC'" : '';
+
     $rows = $wpdb->get_results($wpdb->prepare(
         "SELECT d.id, d.post_id, d.start_date, d.end_date, d.rooms, d.is_concert{$location_select}
          FROM {$table} d
          INNER JOIN {$wpdb->posts} p ON p.ID = d.post_id
          {$location_join}
          WHERE p.post_status = 'publish'
+           {$status_where}
            AND d.start_date >= %s
          ORDER BY d.start_date ASC
          LIMIT %d",

@@ -11,9 +11,13 @@
 	position: absolute;
 }
 
+// `cover` is the default, not the <img> default of `fill`: the photo fills the
+// slide and is cropped, never stretched. A message whose fit is `Passend`
+// overrides this inline; an event has no fit of its own and always covers.
 .soli-tv-slide__bg-img {
 	display: block;
 	height: 100%;
+	object-fit: cover;
 	object-position: center;
 	width: 100%;
 }
@@ -42,11 +46,12 @@
 	width: 100%;
 }
 
+// Under the title, not over it: it closes the heading rather than announcing it.
 .soli-tv-slide__rule {
 	background: var(--soli-tv-gold);
 	display: block;
 	height: 6px;
-	margin-bottom: 3.2vh;
+	margin-top: 2.8vh;
 	width: 96px;
 }
 
