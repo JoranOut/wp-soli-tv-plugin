@@ -103,7 +103,7 @@
 }
 
 .soli-tv-agenda__item {
-	align-items: baseline;
+	align-items: start;
 	border-bottom: 1px solid var(--soli-tv-line);
 	display: grid;
 	gap: 0 1.4vw;
@@ -137,6 +137,11 @@
 	font-size: clamp(24px, 2vw, 40px);
 	font-weight: 700;
 	line-height: 1;
+	// The row aligns its two columns at the top of their line boxes, which is
+	// not the top of their letters: Playfair's digits sit lower in the box than
+	// Inter's capitals do. Measured at 2px against a 33px date, and expressed in
+	// em because both columns scale with the viewport.
+	margin-top: -0.06em;
 }
 
 .soli-tv-agenda__month {
