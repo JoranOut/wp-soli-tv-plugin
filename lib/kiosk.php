@@ -273,7 +273,9 @@ function soli_tv_kiosk_events($settings) {
     $locations = $wpdb->prefix . 'event_location';
     $has_locations = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $locations)) === $locations;
 
-    $location_select = $has_locations ? ', l.name AS location_name' : '';
+    $location_select = $has_locations
+        ? ', l.name AS location_name, l.address AS location_address'
+        : '';
     $location_join = $has_locations
         ? "LEFT JOIN {$locations} l ON l.id = d.location"
         : '';
@@ -337,7 +339,8 @@ function soli_tv_kiosk_events($settings) {
             'startDate'  => $row['start_date'],
             'endDate'    => $row['end_date'],
             'rooms'      => $row['rooms'] ? json_decode($row['rooms'], true) : null,
-            'location'   => isset($row['location_name']) ? $row['location_name'] : '',
+            'location'        => isset($row['location_name']) ? $row['location_name'] : '',
+            'locationAddress' => isset($row['location_address']) ? $row['location_address'] : '',
             'link'       => get_permalink($post),
         );
     }

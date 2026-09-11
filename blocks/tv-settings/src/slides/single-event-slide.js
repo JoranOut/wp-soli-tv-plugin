@@ -12,10 +12,11 @@ import {
 	monthLabel,
 	timeRange,
 	venue,
+	venueFull,
 } from '../utils/event-format';
 
 /** How many dates the agenda panel lists beside the event on show. */
-const AGENDA_LENGTH = 6;
+const AGENDA_LENGTH = 8;
 
 export default function SingleEventSlide( { slide, isActive } ) {
 	const { getEnabledEvents } = useContext( SlidesContext );
@@ -26,16 +27,14 @@ export default function SingleEventSlide( { slide, isActive } ) {
 		[ slide.title ]
 	);
 
-	// The panel starts at the event on show and runs forward from there, so the
-	// highlighted row is the one the other half of the slide is about and the
-	// rest is genuinely what comes next.
-	const agenda = useMemo( () => {
-		const events = getEnabledEvents() || [];
-		const current = events.findIndex( ( event ) => event.id === slide.id );
-		const from = current === -1 ? 0 : current;
-
-		return events.slice( from, from + AGENDA_LENGTH );
-	}, [ getEnabledEvents, slide.id ] );
+	// The same list on every event slide: the next few dates, from the front.
+	// It used to start at the event on show and run forward, which made the
+	// panel change under the viewer on each slide and pushed the earliest dates
+	// off it. The event on show is marked where it appears instead.
+	const agenda = useMemo(
+		() => ( getEnabledEvents() || [] ).slice( 0, AGENDA_LENGTH ),
+		[ getEnabledEvents ]
+	);
 
 	return (
 		<div
@@ -103,7 +102,7 @@ export default function SingleEventSlide( { slide, isActive } ) {
 								</dd>
 							</div>
 
-							{ venue( slide, house ) && (
+							{ venueFull( slide, house ) && (
 								<div className="soli-tv-event__meta-item">
 									<dt>
 										<PinIcon className="soli-tv-event__icon" />
@@ -111,7 +110,7 @@ export default function SingleEventSlide( { slide, isActive } ) {
 											{ __( 'Locatie', 'soli-tv' ) }
 										</span>
 									</dt>
-									<dd>{ venue( slide, house ) }</dd>
+									<dd>{ venueFull( slide, house ) }</dd>
 								</div>
 							) }
 						</dl>
@@ -147,17 +146,20 @@ export default function SingleEventSlide( { slide, isActive } ) {
 								<h3 className="soli-tv-agenda__title">
 									{ event.title }
 								</h3>
+								{ /* One line, not two: eight rows have to fit the
+								     panel, and a second line per row is what
+								     pushed the last of them off the screen. */ }
 								<p className="soli-tv-agenda__detail">
-									{ timeRange(
-										event.startDate,
-										event.endDate
-									) }
+									{ [
+										timeRange(
+											event.startDate,
+											event.endDate
+										),
+										venue( event, house ),
+									]
+										.filter( Boolean )
+										.join( ' · ' ) }
 								</p>
-								{ venue( event, house ) && (
-									<p className="soli-tv-agenda__detail">
-										{ venue( event, house ) }
-									</p>
-								) }
 							</div>
 						</li>
 					) ) }

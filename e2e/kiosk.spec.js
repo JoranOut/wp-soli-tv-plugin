@@ -430,8 +430,8 @@ test.describe( 'the screen at /tv/', () => {
 			slide.locator( '.soli-tv-agenda__item.is-current' )
 		).toContainText( MARKER + ' agenda 0' );
 
-		// The panel runs forward from that event, so the later one is listed
-		// under it rather than above.
+		// Every event slide carries the same list, in start order, so the later
+		// event is listed under the earlier one whichever slide is on show.
 		await expect( slide.locator( '.soli-tv-agenda__item' ) ).toContainText( [
 			new RegExp( MARKER + ' agenda 0' ),
 			new RegExp( MARKER + ' agenda 1' ),

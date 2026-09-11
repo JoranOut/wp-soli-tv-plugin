@@ -224,9 +224,15 @@ there first**, then here.
 Both slide types are the hero's composition: photo full bleed, a scrim over it,
 a gold rule, and the title two-tone with the leading words in cream and the last
 word italic in gold (`utils/split-title.js`, the hero's own rule). An event slide
-puts that on its left half and the agenda on a paper panel beside it, with the
-event the slide is about marked `is-current`; the panel runs forward from that
-event, so the rows under it are genuinely what comes next.
+puts that on its left half and the agenda on a paper panel beside it.
+
+The panel is the **same list on every event slide**: the first `AGENDA_LENGTH`
+dates, in start order, with the event on show marked `is-current` where it
+appears. Slicing from the current event instead made the panel change under the
+viewer on each slide and pushed the earliest dates off it. Eight rows is what
+fits a 1080-high screen, and only because each row puts its time and venue on one
+line; a second line per row clipped the last of them. The left half spells the
+place out in full (name, address, rooms) where the panel keeps the short name.
 
 **The fonts are bundled, in `assets/fonts`.** The hero can say "expected to be
 provided by the active theme" because it renders inside one; `/tv/` renders no

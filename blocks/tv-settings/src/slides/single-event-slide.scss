@@ -90,6 +90,9 @@
 
 .soli-tv-agenda__list {
 	display: flex;
+	// The list takes the height the heading leaves and no more, so a long one
+	// is clipped at the foot of the panel instead of running off the screen.
+	flex: 1;
 	flex-direction: column;
 	list-style: none;
 	margin: 0;
@@ -105,7 +108,7 @@
 	display: grid;
 	gap: 0 1.4vw;
 	grid-template-columns: minmax(52px, auto) 1fr;
-	padding: 1.5vh 0.8vw;
+	padding: 1.15vh 0.8vw;
 
 	&:last-child {
 		border-bottom: 0;
