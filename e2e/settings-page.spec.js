@@ -252,6 +252,17 @@ test.describe( 'the Instellingen screen', () => {
 		).toHaveCount( 1 );
 	} );
 
+	test( 'links each row to the post behind it', async ( { page } ) => {
+		const id = seedMessage( 'link' );
+		await openSettings( page );
+
+		// The edit screen of that exact post: the row carries a switch and a
+		// date, and everything else about the item is edited on the post.
+		await expect(
+			row( page, MARKER + ' link' ).locator( '.soli-tv-settings__edit' )
+		).toHaveAttribute( 'href', new RegExp( 'post=' + id + '(&|$)' ) );
+	} );
+
 	test( 'marks a switched-on message that the screen will not show', async ( {
 		page,
 	} ) => {
