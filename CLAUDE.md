@@ -190,13 +190,39 @@ externals, so a bare `<script src>` loaded it with no dependencies and it died o
 prints the handle and its dependency chain and nothing else — unlike `wp_print_footer_scripts()`,
 which would also print whatever every other plugin queued for a page this document is not.
 
-### An absent window means "always on"
+### The window is whole days, both bounds inclusive
 
-The message query cannot compare `_soli_tv_start` alone: a message with no window has no meta row,
-and a plain comparison drops it. Each bound is an OR of `NOT EXISTS`, empty, and the comparison.
-The value compared is `T`-separated, matching how the meta is stored — it is a string comparison
-in SQL, and `2026-09-10T19:00:00` sorts differently from `2026-09-10 19:00:00` around the
-separator.
+`soli_tv_window_covers_day()` compares only the first ten characters of each bound against today,
+so `vanaf 11 september` starts at the beginning of that day and `tot 11 september` runs to the end
+of it. **The time part of a bound is ignored.**
+
+That is a deliberate reading of what the field means, and it fixes a real report: the panel's
+inputs are `datetime-local`, so a bound picked as a date arrives as midnight — and compared as a
+moment, `tot vandaag 00:00` had already passed for the whole of the day it was meant to run.
+`e2e/kiosk.spec.js` covers both sides (a window starting and ending today shows; one ending
+yesterday does not), and the first was proved by putting the moment comparison back and watching
+it fail.
+
+The panel still offers a time it no longer honours. Moving to `type="date"` needs the meta
+pattern widened to accept a date-only value and the stored values migrated, or a `date` input
+renders an existing `...T19:00` as empty and the next save silently drops the window.
+
+An empty or absent bound is open in that direction, so a message with no window at all is always
+on. This is a PHP filter over the published messages rather than a `meta_query`, which the
+whole-day rule is what settled: an absent bound has no meta row, so each side needed an OR of
+`NOT EXISTS`, empty and the comparison — and the comparison is a string compare in SQL, which
+cannot express "same day" without slicing the value first. Message counts here are in the dozens.
+
+### The image owns its pane
+
+`img_text` puts the image in a `.content-image-frame` of its own inside the left grid cell. The
+frame takes the full pane and clips; `object-fit` on the image reads the slide's own `_soli_tv_fit`
+(`Vullend` crops to fill, `Passend` fits inside). Sizing the `<img>` itself left background showing
+on any photo whose aspect ratio was not the pane's.
+
+The grid needs `grid-template-rows: 100%` for this. A grid row sizes to its tallest item, so a wide
+photo gave the row its own 200px and the frame — correctly 100% of that row — covered a fifth of
+the pane. Measured, not guessed: the frame's bounding box went from 640×200 to 640×720 at 1280×720.
 
 ### Images were never rendering
 

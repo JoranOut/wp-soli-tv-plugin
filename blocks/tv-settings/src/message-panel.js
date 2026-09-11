@@ -115,7 +115,7 @@ function MessageFields() {
           value={meta?._soli_tv_end || ""}
           onChange={update("_soli_tv_end")}
           help={__(
-            "Buiten deze periode staat de slide niet op het scherm.",
+            "Buiten deze periode staat de slide niet op het scherm. Beide dagen tellen volledig mee; de tijd wordt genegeerd.",
             "soli-tv",
           )}
         />

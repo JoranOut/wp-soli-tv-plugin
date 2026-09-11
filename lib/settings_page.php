@@ -144,6 +144,9 @@ function soli_tv_enqueue_settings_page($hook_suffix) {
     wp_localize_script('soli-tv-settings-page', 'SoliTVSettingsPage', array(
         'eventsPluginActive' => is_plugin_active('wp-soli-event-plugin/soli-event-plugin.php'),
         'newMessageUrl'      => admin_url('post-new.php?post_type=soli_tv_message'),
+        // A template rather than a url per row: `wp/v2` carries no edit link,
+        // and the post id is the only part that varies.
+        'editUrlTemplate'    => admin_url('post.php?action=edit&post=__ID__'),
         // Both horizons come from PHP so the screen and this list cannot drift
         // apart: one of them is what /tv/ actually queries.
         'eventHorizon'       => SETTINGS_EVENT_HORIZON,
