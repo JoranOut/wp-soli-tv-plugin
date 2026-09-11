@@ -1,14 +1,56 @@
 // The kiosk document carries no theme and no global styles, so everything the
 // screen needs is here or in the slide components' own stylesheets.
+@import "./tokens";
 @import "./slides/slide-show";
 @import "./slides/single-tv-slide";
 @import "./slides/single-event-slide";
 @import "./slides/qr-wrapper";
 
+// Bundled rather than fetched: the screen has to keep looking right when the
+// association's internet is down, and it renders no theme that could provide
+// them. Variable files, so every weight below costs one request.
+@font-face {
+	font-family: "Inter";
+	font-style: normal;
+	font-weight: 100 900;
+	font-display: swap;
+	src: url("../assets/fonts/inter-variable.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Playfair Display";
+	font-style: normal;
+	font-weight: 400 900;
+	font-display: swap;
+	src: url("../assets/fonts/playfair-display-variable.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Playfair Display";
+	font-style: italic;
+	font-weight: 400 900;
+	font-display: swap;
+	src: url("../assets/fonts/playfair-display-italic-variable.woff2") format("woff2");
+}
+
+// The kiosk document is entirely ours - no theme, no core styles - so nothing
+// has established this yet, and every panel below sizes itself with padding.
+// Without it `width: 100%` plus padding overflows: the message title's column
+// came out 2558px wide on a 1672px slide and the title never wrapped.
+html {
+	box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: inherit;
+}
+
 body.soli-tv-kiosk {
-	background: #fff;
-	color: #000;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	background: var(--soli-tv-ink);
+	color: var(--soli-tv-cream);
+	font-family: var(--soli-tv-font-sans);
 	margin: 0;
 	overflow: hidden;
 }
@@ -23,6 +65,7 @@ body.soli-tv-kiosk {
 
 .soli-tv-kiosk__notes {
 	animation: soli-tv-bounce 1.2s ease-in-out infinite;
+	color: var(--soli-tv-gold);
 	font-size: 4rem;
 	letter-spacing: 0.3em;
 }

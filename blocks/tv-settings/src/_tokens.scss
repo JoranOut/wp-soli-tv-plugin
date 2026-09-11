@@ -1,0 +1,27 @@
+// The Soli design language, taken from `wp-soli-event-plugin`'s concert hero
+// (`events/blocks/concert-hero/src/index.scss`) so the screen in the hall and
+// the website speak with one voice. Change them there first.
+//
+// Declared on :root rather than scoped to a block: the kiosk document is the
+// whole page, and the slide components each carry their own stylesheet.
+:root {
+	--soli-tv-cream: #faf6ee;
+	--soli-tv-gold: #c9a24a;
+	--soli-tv-ink: #1a1a2e;
+	--soli-tv-line: #e6e2da;
+	--soli-tv-maroon: #7a1f2b;
+	--soli-tv-muted: #5a5a5e;
+	--soli-tv-lead: #e7e0d2;
+	--soli-tv-font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+	--soli-tv-font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+	// The overlay that makes text readable over any photo. Same three stops as
+	// the hero, turned to run along the slide's own reading direction.
+	--soli-tv-scrim: linear-gradient(
+		100deg,
+		rgba(26, 26, 46, 0.94) 0%,
+		rgba(26, 26, 46, 0.82) 38%,
+		rgba(26, 26, 46, 0.45) 70%,
+		rgba(26, 26, 46, 0.25) 100%
+	);
+}

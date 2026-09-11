@@ -127,24 +127,32 @@ msgid "De build ontbreekt. Voer `npm run build` uit."
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/selected-date/selected-date.js:94
+#: blocks/tv-settings/src/slides/single-event-slide.js:23
 msgid "Muziekcentrum Soli"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/build/settings-page.js:2
-#: blocks/tv-settings/src/settings-page.js:172
-#: blocks/tv-settings/src/slides/single-event-slide.js:28
-msgid "Agenda"
+#: blocks/tv-settings/src/slides/single-event-slide.js:85
+msgid "Datum"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-event-slide.js:42
-msgid "SOLI muziekcentrum"
+#: blocks/tv-settings/src/slides/single-event-slide.js:95
+msgid "Tijd"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-tv-slide.js:45
+#: blocks/tv-settings/src/slides/single-event-slide.js:111
+msgid "Locatie"
+msgstr ""
+
+#: blocks/tv-settings/build/kiosk.js:1
+#: blocks/tv-settings/src/slides/single-event-slide.js:124
+msgid "Evenementen"
+msgstr ""
+
+#: blocks/tv-settings/build/kiosk.js:1
+#: blocks/tv-settings/src/slides/single-tv-slide.js:92
 msgid "Scan de QR!"
 msgstr ""
 
@@ -309,6 +317,11 @@ msgstr ""
 #: blocks/tv-settings/build/settings-page.js:2
 #: blocks/tv-settings/src/settings-page.js:160
 msgid "Nog geen tv berichten."
+msgstr ""
+
+#: blocks/tv-settings/build/settings-page.js:2
+#: blocks/tv-settings/src/settings-page.js:172
+msgid "Agenda"
 msgstr ""
 
 #: blocks/tv-settings/build/settings-page.js:2

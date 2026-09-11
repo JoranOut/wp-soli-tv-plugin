@@ -213,6 +213,45 @@ whole-day rule is what settled: an absent bound has no meta row, so each side ne
 `NOT EXISTS`, empty and the comparison — and the comparison is a string compare in SQL, which
 cannot express "same day" without slicing the value first. Message counts here are in the dozens.
 
+### The slides follow the concert hero
+
+The screen speaks the same design language as the website: the tokens in
+`src/_tokens.scss` are copied from `wp-soli-event-plugin`'s concert hero
+(`events/blocks/concert-hero/src/index.scss`) — cream, gold, ink, maroon,
+Playfair Display for display type and Inter for everything else. **Change them
+there first**, then here.
+
+Both slide types are the hero's composition: photo full bleed, a scrim over it,
+a gold rule, and the title two-tone with the leading words in cream and the last
+word italic in gold (`utils/split-title.js`, the hero's own rule). An event slide
+puts that on its left half and the agenda on a paper panel beside it, with the
+event the slide is about marked `is-current`; the panel runs forward from that
+event, so the rows under it are genuinely what comes next.
+
+**The fonts are bundled, in `assets/fonts`.** The hero can say "expected to be
+provided by the active theme" because it renders inside one; `/tv/` renders no
+theme and calls no `wp_head()`. They are also not fetched from a CDN: the screen
+has to keep looking right when the hall's internet is down. Variable weights, so
+all of Inter is one request and Playfair is two (upright and italic).
+
+**`box-sizing` is set in `kiosk.scss` and the document depends on it.** Nothing
+else establishes it here — no theme, no core stylesheet — and every panel sizes
+itself with percentage padding. Without it the message title's column came out
+2558px wide on a 1672px slide and the title never wrapped.
+
+Two CSS traps, both measured while building this:
+
+- **A grid row sizes to its tallest item.** The image frame is `height: 100%` of
+  its row, so a 1600×500 photo gave the row 200px and the image covered a fifth
+  of the pane. `grid-template-rows: 100%` on the slide fixes it.
+- **The event's inner panel carries two classes that both style it**,
+  `soli-tv-slide__inner` (centres) and `soli-tv-event__inner` (bottom-aligns).
+  Equal specificity leaves the winner to the order the stylesheets happen to be
+  concatenated in, so the event rule is selected through the slide.
+
+The screen formats dates in Dutch and does not follow the viewer's locale: it
+hangs in Driehuis and has one audience. The admin screens are the opposite case.
+
 ### The image owns its pane
 
 `img_text` puts the image in a `.content-image-frame` of its own inside the left grid cell. The

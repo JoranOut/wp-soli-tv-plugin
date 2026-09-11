@@ -1,90 +1,112 @@
-.soli-tv-block-single-slide.message.img_text {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  // One row, the full height of the slide. Without this the row sizes to its
-  // tallest item, so a wide photo gave the row its own 200px and the image
-  // frame - correctly 100% of that row - covered a fifth of the pane.
-  grid-template-rows: 100%;
-  height: 100%;
-  width: 100%;
-  align-items: center;
-
-  // The image owns the whole left pane. `align-items: center` on the grid
-  // sizes a cell to its content, so the frame has to claim the full height
-  // itself - without this it collapses to the image's own height and the pane
-  // shows background above and below.
-  .content-image-frame {
-    align-self: stretch;
-    height: 100%;
-    overflow: hidden;
-    width: 100%;
-  }
-
-  .content-image {
-    display: block;
-    height: 100%;
-    object-position: center;
-    width: 100%;
-  }
-
-  .content {
-    max-width: 70%;
-    max-height: 70vh;
-    align-content: center;
-    margin-bottom: 50px;
-  }
-}
-
-.soli-tv-block-single-slide.message.img_only {
-  display: block;
-  height: 100%;
-  width: 100%;
-  text-align: center;
-  align-content: center;
-  background: black;
-
-  .content-image-frame {
-    height: 100%;
-    overflow: hidden;
-    width: 100%;
-  }
-
-  .content-image {
-    height: 100%;
-    object-position: center;
-    width: 100%;
-  }
-}
-
-.soli-tv-block-single-slide.message.text_only {
-  display: block;
-  height: 100%;
-  width: 100%;
-  text-align: center;
-  align-content: center;
-
-  .content {
-    max-width: 100%;
-    max-height: calc(100% - 40px);
-    align-content: center;
-    justify-self: center;
-    aspect-ratio: 1.2;
-    font-size: 1.6em;
-    margin-bottom: 40px;
-  }
-}
-
+// A message slide: photo full bleed, text on a scrim over it. The shared parts
+// live here because the event slide reuses them for its left half.
 .soli-tv-block-single-slide.message {
-  .qr-wrapper {
-    position: absolute;
-    bottom: 50px;
-    right: 20px;
-    width: 160px;
+	background: var(--soli-tv-ink);
+	height: 100%;
+	width: 100%;
+}
 
-    p {
-      margin: 5px 0;
-      text-align: center;
-      background: white;
-    }
-  }
+.soli-tv-slide__bg {
+	inset: 0;
+	position: absolute;
+}
+
+.soli-tv-slide__bg-img {
+	display: block;
+	height: 100%;
+	object-position: center;
+	width: 100%;
+}
+
+.soli-tv-slide__scrim {
+	background: var(--soli-tv-scrim);
+	inset: 0;
+	position: absolute;
+}
+
+.soli-tv-slide__inner {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	justify-content: center;
+	// Right padding is the wide one: the text column stops well short of the
+	// slide's edge so the photo still reads as a photo.
+	padding: 6vh 46% 6vh 7%;
+	position: relative;
+	width: 100%;
+}
+
+// Explicit, so the text column is the padding box rather than whatever the
+// flex item happens to shrink to - the wrap points then follow the padding.
+.soli-tv-slide__content {
+	width: 100%;
+}
+
+.soli-tv-slide__rule {
+	background: var(--soli-tv-gold);
+	display: block;
+	height: 6px;
+	margin-bottom: 3.2vh;
+	width: 96px;
+}
+
+.soli-tv-slide__title {
+	font-family: var(--soli-tv-font-display);
+	font-size: clamp(48px, 6.4vw, 132px);
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	line-height: 0.98;
+	margin: 0;
+}
+
+.soli-tv-slide__title-lead {
+	color: var(--soli-tv-cream);
+}
+
+.soli-tv-slide__title-accent {
+	color: var(--soli-tv-gold);
+	font-style: italic;
+}
+
+.soli-tv-slide__lead {
+	color: var(--soli-tv-lead);
+	font-family: var(--soli-tv-font-sans);
+	font-size: clamp(18px, 1.7vw, 34px);
+	line-height: 1.55;
+	margin-top: 3.4vh;
+	max-width: 34ch;
+
+	p {
+		margin: 0 0 0.7em;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+}
+
+// Nothing but the photo: no scrim, no text column, and the image is free to
+// use the whole slide.
+.soli-tv-block-single-slide.message.img_only {
+	background: #000;
+}
+
+// No photo to sit on, so the text is centred on the ink background instead of
+// hugging the left edge.
+.soli-tv-block-single-slide.message.text_only {
+	.soli-tv-slide__inner {
+		align-items: center;
+		padding: 6vh 12%;
+		text-align: center;
+	}
+
+	.soli-tv-slide__content {
+		align-items: center;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.soli-tv-slide__lead {
+		max-width: 48ch;
+	}
 }

@@ -240,6 +240,32 @@ test.describe( 'the screen at /tv/', () => {
 		wpEval( 'wp_delete_attachment( ' + attachment + ', true );' );
 	} );
 
+	test( 'renders a message in the Soli two-tone treatment', async ( {
+		page,
+	} ) => {
+		seedMessage( 'two-tone', {} );
+
+		await page.goto( '/tv/', { waitUntil: 'domcontentloaded' } );
+
+		// Class hooks, never the copy: the title's own words are content and
+		// the rest of this suite runs against whichever locale is active.
+		const slide = page
+			.locator( '.soli-tv-block-single-slide.message' )
+			.filter( { hasText: MARKER + ' two-tone' } )
+			.first();
+
+		await expect(
+			slide.locator( '.soli-tv-slide__title-lead' )
+		).toContainText( MARKER );
+		// The last word carries the accent, which is the hero's rule.
+		await expect(
+			slide.locator( '.soli-tv-slide__title-accent' )
+		).toHaveText( 'two-tone' );
+		await expect( slide.locator( '.soli-tv-slide__scrim' ) ).toHaveCount(
+			1
+		);
+	} );
+
 	test( 'renders the slides in a browser without console errors', async ( {
 		page,
 	} ) => {
@@ -315,6 +341,64 @@ test.describe( 'the screen at /tv/', () => {
 			'global $wpdb;' +
 				' $wpdb->delete( $wpdb->prefix . "event_dates", array( "post_id" => ' + seeded + ' ) );' +
 				' wp_delete_post( ' + seeded + ', true );'
+		);
+	} );
+
+	test( 'renders an event beside the agenda, with its own row marked', async ( {
+		page,
+	} ) => {
+		test.skip(
+			! eventsAvailable,
+			'wp-soli-event-plugin is not installed in this environment'
+		);
+
+		// Two dates, so the panel has something to list besides the event the
+		// slide is about and `is-current` has to pick one of them.
+		const seeded = wpEvalJson(
+			'global $wpdb; $ids = array();' +
+				" foreach ( array( '+2 days', '+9 days' ) as $i => $when ) {" +
+				"   $post = wp_insert_post( array( 'post_type' => 'soli_event'," +
+				" 'post_status' => 'publish', 'post_title' => '" + MARKER + " agenda ' . $i ) );" +
+				'   $wpdb->insert( $wpdb->prefix . "event_dates", array(' +
+				"     'post_id' => $post," +
+				"     'start_date' => gmdate( 'Y-m-d H:i:s', strtotime( $when ) )," +
+				"     'end_date' => gmdate( 'Y-m-d H:i:s', strtotime( $when ) + 7200 )," +
+				"     'status' => 'PUBLIC', 'is_concert' => 1 )," +
+				"     array( '%d','%s','%s','%s','%d' ) );" +
+				'   $ids[] = $post;' +
+				' }' +
+				' echo wp_json_encode( $ids );'
+		);
+
+		await page.goto( '/tv/', { waitUntil: 'domcontentloaded' } );
+
+		const slide = page
+			.locator( '.soli-tv-block-single-slide.event' )
+			.filter( { hasText: MARKER + ' agenda 0' } )
+			.first();
+
+		// Every event slide carries the panel, and exactly one row in it is the
+		// event that slide is about.
+		await expect(
+			slide.locator( '.soli-tv-agenda__item.is-current' )
+		).toHaveCount( 1 );
+		await expect(
+			slide.locator( '.soli-tv-agenda__item.is-current' )
+		).toContainText( MARKER + ' agenda 0' );
+
+		// The panel runs forward from that event, so the later one is listed
+		// under it rather than above.
+		await expect( slide.locator( '.soli-tv-agenda__item' ) ).toContainText( [
+			new RegExp( MARKER + ' agenda 0' ),
+			new RegExp( MARKER + ' agenda 1' ),
+		] );
+
+		wpEval(
+			'global $wpdb;' +
+				' foreach ( array( ' + seeded.join( ',' ) + ' ) as $id ) {' +
+				'   $wpdb->delete( $wpdb->prefix . "event_dates", array( "post_id" => $id ) );' +
+				'   wp_delete_post( $id, true );' +
+				' }'
 		);
 	} );
 } );
