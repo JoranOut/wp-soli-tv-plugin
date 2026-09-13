@@ -288,6 +288,41 @@ test.describe( 'the screen at /tv/', () => {
 		);
 	} );
 
+	test( 'keeps the QR card on the slide', async ( { page } ) => {
+		seedMessage( 'qr', { _soli_tv_link: 'https://soli.nl/agenda/' } );
+
+		await page.goto( '/tv/', { waitUntil: 'domcontentloaded' } );
+
+		const slide = page
+			.locator( '.soli-tv-block-single-slide.message' )
+			.filter( {
+				has: page.locator( '.soli-tv-slide__title', {
+					hasText: MARKER + ' qr',
+				} ),
+			} )
+			.first();
+
+		const card = slide.locator( '.qr-wrapper' );
+		await expect( card ).toHaveCount( 1 );
+
+		// It was `position: static` once, which put it 1672px wide at y=957 on
+		// a 941px slide: present in the DOM, entirely off the screen, and
+		// nothing failed. The assertion is therefore about where it lands.
+		const box = await card.boundingBox();
+		const viewport = page.viewportSize();
+
+		expect( box.x ).toBeGreaterThanOrEqual( 0 );
+		expect( box.y ).toBeGreaterThanOrEqual( 0 );
+		expect( box.x + box.width ).toBeLessThanOrEqual( viewport.width );
+		expect( box.y + box.height ).toBeLessThanOrEqual( viewport.height );
+
+		// Opposite the copy, not over it.
+		const title = await slide
+			.locator( '.soli-tv-slide__title' )
+			.boundingBox();
+		expect( box.x ).toBeGreaterThan( title.x + title.width );
+	} );
+
 	test( 'renders the slides in a browser without console errors', async ( {
 		page,
 	} ) => {

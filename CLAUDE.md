@@ -295,6 +295,23 @@ hidden`. That pairing is what keeps the link on the panel when several titles
 wrap: without it the list grows and pushes the link off the bottom. Stress it
 with titles long enough to wrap every row before trusting a change here.
 
+### The QR card
+
+A message with a link shows a QR bottom right, on a cream card with a gold
+outline, opposite the text column. The card is what makes it scannable: a QR
+needs a quiet zone and hard contrast, and the photo behind it is whatever the
+message happens to carry.
+
+**The size lives on the wrapper, never on the image.** `qr-wrapper.scss` animates
+the image's own `width` and `height` from 0 on every slide change, so anything
+set on the `<img>` is overwritten the moment the slide becomes active.
+
+This is also where the rewrite of `single-tv-slide.scss` lost a rule and nobody
+noticed: with no `position` the card fell out of flow at 1672px wide and y=957 on
+a 941px slide, present in the DOM and entirely off the screen. `e2e/kiosk.spec.js`
+now asserts the card's box sits inside the viewport and to the right of the
+title. Setting `position: static` back fails it.
+
 ### The scrim is tuned against a white photo
 
 `--soli-tv-scrim` is the one gradient the plugin applies: `--soli-tv-ink` at

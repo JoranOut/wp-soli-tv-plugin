@@ -90,6 +90,40 @@
 	}
 }
 
+// Bottom right, on a card of its own. It has to read over any photo, and the
+// text column owns the other side of the slide, so it sits opposite the copy
+// rather than under it.
+//
+// The size is on the wrapper: the pop-in animation in qr-wrapper.scss animates
+// the image's own width and height from 0, so anything set on the image is
+// overwritten the moment a slide becomes active.
+.soli-tv-block-single-slide.message .qr-wrapper {
+	background: var(--soli-tv-cream);
+	border-radius: 8px;
+	bottom: 6vh;
+	box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.5);
+	outline: 3px solid rgba(201, 162, 74, 0.5);
+	padding: 14px 14px 10px;
+	position: absolute;
+	right: 5%;
+	width: clamp(120px, 11vw, 200px);
+
+	img {
+		display: block;
+	}
+
+	p {
+		color: var(--soli-tv-ink);
+		font-family: var(--soli-tv-font-sans);
+		font-size: clamp(10px, 0.72vw, 15px);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		margin: 8px 0 0;
+		text-align: center;
+		text-transform: uppercase;
+	}
+}
+
 // Nothing but the photo: no scrim, no text column, and the image is free to
 // use the whole slide.
 .soli-tv-block-single-slide.message.img_only {

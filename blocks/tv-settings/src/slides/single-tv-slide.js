@@ -88,14 +88,18 @@ export default function SingleTVSlide( { slide, isActive } ) {
 			) }
 
 			{ slide.link && (
+				// Its own card rather than a floating image: a QR needs a quiet
+				// zone and hard contrast to scan, and the photo behind it is
+				// whatever the message happens to carry. The size lives on the
+				// wrapper because the pop-in animation drives the image's own
+				// width and height.
 				<div className="qr-wrapper">
-					<p>{ __( 'Scan de QR!', 'soli-tv' ) }</p>
 					<img
 						src={ qrSrc }
 						alt={ __( 'QR code', 'soli-tv' ) }
-						style={ { width: 160, height: 160 } }
 						loading="lazy"
 					/>
+					<p>{ __( 'Scan de QR!', 'soli-tv' ) }</p>
 				</div>
 			) }
 		</div>
