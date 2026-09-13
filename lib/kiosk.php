@@ -175,8 +175,13 @@ function soli_tv_kiosk_payload() {
     );
 
     return array(
-        'delayMs' => max(5, (int) $settings['delay']) * 1000,
-        'slides'  => soli_tv_interleave_slides(
+        'delayMs'   => max(5, (int) $settings['delay']) * 1000,
+        // Where the hall is pointed for the rest of the agenda. `/agenda/` is
+        // the path every event plugin block defaults to. It follows the site it
+        // runs on, so a staging screen names staging; filter it to send every
+        // screen to the public site instead.
+        'agendaUrl' => apply_filters('soli_tv_agenda_url', home_url('/agenda/')),
+        'slides'    => soli_tv_interleave_slides(
             soli_tv_kiosk_messages(),
             soli_tv_kiosk_events($settings)
         ),

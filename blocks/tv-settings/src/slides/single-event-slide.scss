@@ -90,10 +90,14 @@
 
 .soli-tv-agenda__list {
 	display: flex;
-	// The list takes the height the heading leaves and no more, so a long one
-	// is clipped at the foot of the panel instead of running off the screen.
+	// The list takes the height the heading and the link leave, and no more: a
+	// list of wrapped titles is clipped at its own foot rather than pushing the
+	// link off the panel. `min-height: 0` is what lets a flex item shrink below
+	// its content, and `overflow: hidden` is what then hides the overspill.
 	flex: 1;
 	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
 	list-style: none;
 	margin: 0;
 	// The panel is a fixed height and the list must not spill out of it: the
@@ -167,6 +171,23 @@
 	font-size: clamp(13px, 1vw, 20px);
 	line-height: 1.4;
 	margin: 0.2em 0 0;
+}
+
+// Sits at the foot of the panel, under whatever the list leaves. `margin-top:
+// auto` rather than a gap: the list is flexible, so a short agenda would
+// otherwise leave the link floating under the last row.
+.soli-tv-agenda__link {
+	border-top: 1px solid var(--soli-tv-line);
+	flex-shrink: 0;
+	color: var(--soli-tv-maroon);
+	font-family: var(--soli-tv-font-sans);
+	font-size: clamp(12px, 0.95vw, 19px);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	margin-top: auto;
+	padding-top: 1.6vh;
+	text-align: center;
+	text-decoration: none;
 }
 
 // Visually hidden, still read out: the icons carry the meaning of each meta row.

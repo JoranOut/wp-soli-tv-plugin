@@ -28,7 +28,7 @@ msgid "Joran Out"
 msgstr ""
 
 #. translators: %s: site name.
-#: lib/kiosk.php:135
+#: lib/kiosk.php:141
 #, php-format
 msgid "%s op het scherm"
 msgstr ""
@@ -127,31 +127,38 @@ msgid "De build ontbreekt. Voer `npm run build` uit."
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-event-slide.js:23
+#: blocks/tv-settings/src/slides/single-event-slide.js:34
 msgid "Muziekcentrum Soli"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-event-slide.js:85
+#: blocks/tv-settings/src/slides/single-event-slide.js:91
 msgid "Datum"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-event-slide.js:95
+#: blocks/tv-settings/src/slides/single-event-slide.js:101
 msgid "Tijd"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-event-slide.js:111
+#: blocks/tv-settings/src/slides/single-event-slide.js:117
 msgid "Locatie"
 msgstr ""
 
 #: blocks/tv-settings/build/kiosk.js:1
-#: blocks/tv-settings/src/slides/single-event-slide.js:124
+#: blocks/tv-settings/src/slides/single-event-slide.js:130
 msgid "Evenementen"
 msgstr ""
 
-#: blocks/tv-settings/build/kiosk.js:1
+#. translators: %s: the agenda address, without scheme, e.g. soli.nl/agenda
+#: blocks/tv-settings/build/kiosk.js:2
+#: blocks/tv-settings/src/slides/single-event-slide.js:179
+#, js-format
+msgid "meer weten: %s"
+msgstr ""
+
+#: blocks/tv-settings/build/kiosk.js:2
 #: blocks/tv-settings/src/slides/single-tv-slide.js:92
 msgid "Scan de QR!"
 msgstr ""
