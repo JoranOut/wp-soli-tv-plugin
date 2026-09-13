@@ -92,7 +92,7 @@ export default function SingleTVSlide( { slide, isActive } ) {
 					<p>{ __( 'Scan de QR!', 'soli-tv' ) }</p>
 					<img
 						src={ qrSrc }
-						alt="QR code"
+						alt={ __( 'QR code', 'soli-tv' ) }
 						style={ { width: 160, height: 160 } }
 						loading="lazy"
 					/>

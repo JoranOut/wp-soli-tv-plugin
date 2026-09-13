@@ -561,12 +561,25 @@ Controls therefore carry stable class hooks (`soli-tv-field--start`,
 Same for core: use `button.editor-post-save-draft`, not its name. Dates are formatted in the
 admin's locale, so assert on a year rather than a formatted date.
 
-Both locales are worth running before trusting an admin-UI spec:
+**Core's own admin screens count, and so do its status words.**
+`e2e/debug-mode.spec.js` read `WP_DEBUG` off Site Health and asserted `Enabled`,
+which is `Ingeschakeld` the moment the environment runs in Dutch. It reads the
+constants out of PHP now, together with `display_errors`, which is the thing the
+other specs actually depend on. Proved still honest by setting `WP_DEBUG` to
+false and watching it fail.
+
+Run the suite in both locales before trusting it:
 
 ```bash
-wp-env run tests-cli -- wp language core install nl_NL
-wp-env run tests-cli -- wp site switch-language nl_NL   # then en_US
+wp-env run tests-cli -- wp language core install nl_NL --activate
+npm run test:e2e
+wp-env run tests-cli -- wp site switch-language en_US
+npm run test:e2e
 ```
+
+Install the pack first. `wp site switch-language nl_NL` fails silently without
+it, so a "both locales" run can quietly be two English ones — which is how this
+one was passing.
 
 ### The event plugin is absent on CI
 

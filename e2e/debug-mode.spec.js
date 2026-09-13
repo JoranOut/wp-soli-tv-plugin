@@ -18,34 +18,27 @@
 
 const { test, expect } = require( '@playwright/test' );
 
-/**
- * Reads a constant's reported state from the Site Health "Info" tab.
- *
- * The constants live in a collapsed accordion panel, so the value is read from
- * `textContent` (which Playwright's `toHaveText` uses) rather than from
- * `innerText`, which is empty for hidden elements.
- *
- * @param {import('@playwright/test').Page} page
- * @param {string}                          constant Constant name.
- * @return {import('@playwright/test').Locator} The value cell.
- */
-function constantValue( page, constant ) {
-	return page
-		.locator( '#health-check-accordion-block-wp-constants tr', {
-			has: page.locator( 'th', {
-				hasText: new RegExp( `^${ constant }$` ),
-			} ),
-		} )
-		.locator( 'td' );
-}
+const { wpEvalJson } = require( './helpers' );
 
 test.describe( 'PHP diagnostics are visible in the test environment', () => {
-	test( 'WP_DEBUG and WP_DEBUG_DISPLAY are enabled', async ( { page } ) => {
-		await page.goto( '/wp-admin/site-health.php?tab=debug' );
-
-		await expect( constantValue( page, 'WP_DEBUG' ) ).toHaveText( 'Enabled' );
-		await expect( constantValue( page, 'WP_DEBUG_DISPLAY' ) ).toHaveText(
-			'Enabled'
+	test( 'WP_DEBUG and WP_DEBUG_DISPLAY are enabled', async () => {
+		// Read from PHP, not from Site Health. That screen reports the state as
+		// "Enabled", which is "Ingeschakeld" the moment the environment runs in
+		// Dutch, and this suite runs against whichever locale is active.
+		const constants = wpEvalJson(
+			'echo wp_json_encode( array(' +
+				" 'WP_DEBUG' => defined( 'WP_DEBUG' ) && WP_DEBUG," +
+				" 'WP_DEBUG_DISPLAY' => defined( 'WP_DEBUG_DISPLAY' ) && WP_DEBUG_DISPLAY," +
+				" 'display_errors' => (string) ini_get( 'display_errors' )," +
+				' ) );'
 		);
+
+		expect( constants.WP_DEBUG ).toBe( true );
+		expect( constants.WP_DEBUG_DISPLAY ).toBe( true );
+
+		// The constants are the switch; `display_errors` is what actually puts
+		// a diagnostic on the page, and it is what the other specs depend on.
+		expect( constants.display_errors ).not.toBe( '' );
+		expect( constants.display_errors ).not.toBe( '0' );
 	} );
 } );

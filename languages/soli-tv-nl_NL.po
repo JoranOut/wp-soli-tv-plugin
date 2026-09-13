@@ -163,6 +163,11 @@ msgstr ""
 msgid "Scan de QR!"
 msgstr ""
 
+#: blocks/tv-settings/build/kiosk.js:2
+#: blocks/tv-settings/src/slides/single-tv-slide.js:95
+msgid "QR code"
+msgstr ""
+
 #: blocks/tv-settings/build/message-panel.js:1
 #: blocks/tv-settings/src/message-panel.js:73
 msgid "Layout"
