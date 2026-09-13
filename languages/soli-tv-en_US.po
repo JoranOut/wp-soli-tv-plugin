@@ -31,7 +31,7 @@ msgstr ""
 #: lib/kiosk.php:141
 #, php-format
 msgid "%s op het scherm"
-msgstr ""
+msgstr "%s on the screen"
 
 #: lib/post_type.php:47
 #: lib/post_type.php:59
@@ -162,6 +162,11 @@ msgstr "more at: %s"
 #: blocks/tv-settings/src/slides/single-tv-slide.js:92
 msgid "Scan de QR!"
 msgstr "Scan the QR code!"
+
+#: blocks/tv-settings/build/kiosk.js:2
+#: blocks/tv-settings/src/slides/single-tv-slide.js:95
+msgid "QR code"
+msgstr ""
 
 #: blocks/tv-settings/build/message-panel.js:1
 #: blocks/tv-settings/src/message-panel.js:73
