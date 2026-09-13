@@ -456,6 +456,48 @@ test.describe( 'the screen at /tv/', () => {
 		);
 	} );
 
+	test( 'points the hall at the full agenda under the list', async ( {
+		page,
+	} ) => {
+		test.skip(
+			! eventsAvailable,
+			'wp-soli-event-plugin is not installed in this environment'
+		);
+
+		const seeded = wpEvalJson(
+			'global $wpdb;' +
+				" $post = wp_insert_post( array( 'post_type' => 'soli_event'," +
+				" 'post_status' => 'publish', 'post_title' => '" + MARKER + " link' ) );" +
+				' $wpdb->insert( $wpdb->prefix . "event_dates", array(' +
+				"   'post_id' => $post," +
+				"   'start_date' => gmdate( 'Y-m-d H:i:s', strtotime( '+3 days' ) )," +
+				"   'end_date' => gmdate( 'Y-m-d H:i:s', strtotime( '+3 days' ) + 7200 )," +
+				"   'status' => 'PUBLIC', 'is_concert' => 1 )," +
+				"   array( '%d','%s','%s','%s','%d' ) );" +
+				' echo wp_json_encode( $post );'
+		);
+
+		await page.goto( '/tv/', { waitUntil: 'domcontentloaded' } );
+
+		const link = page
+			.locator( '.soli-tv-block-single-slide.event' )
+			.first()
+			.locator( '.soli-tv-agenda__link' );
+
+		// The href follows the site it runs on, so the host is whatever this
+		// environment is; the path is what matters, and the label drops the
+		// scheme so it can be read from across a hall.
+		await expect( link ).toHaveAttribute( 'href', /\/agenda\/$/ );
+		await expect( link ).toHaveText( /\/agenda$/ );
+		await expect( link ).not.toHaveText( /^https?:/ );
+
+		wpEval(
+			'global $wpdb;' +
+				' $wpdb->delete( $wpdb->prefix . "event_dates", array( "post_id" => ' + seeded + ' ) );' +
+				' wp_delete_post( ' + seeded + ', true );'
+		);
+	} );
+
 	test( 'renders an event beside the agenda, with its own row marked', async ( {
 		page,
 	} ) => {

@@ -11,6 +11,7 @@ import { createContext } from '@wordpress/element';
  */
 export const SlidesContext = createContext( {
 	slides: [],
+	agendaUrl: '',
 	enableSlide: () => {},
 	getSlideByIndex: () => {},
 	getEnabledEvents: () => [],

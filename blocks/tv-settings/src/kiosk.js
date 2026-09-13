@@ -68,6 +68,7 @@ function Kiosk( { initial } ) {
 	// stay untouched.
 	const context = {
 		slides,
+		agendaUrl: payload.agendaUrl || '',
 		enableSlide: () => {},
 		getSlideByIndex: ( index ) =>
 			slides.find( ( slide ) => slide.index === index ),

@@ -1,6 +1,6 @@
 import './single-event-slide.scss';
 import { useContext, useMemo } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { SlidesContext } from '../providers/slides-context';
 import { imageUrl as slideImageUrl } from '../utils/slide-image';
 import { splitTitle } from '../utils/split-title';
@@ -15,8 +15,21 @@ import {
 	venueFull,
 } from '../utils/event-format';
 
+/**
+ * The url as the hall should read it: no scheme, no trailing slash.
+ *
+ * `soli.nl/agenda` is something a person can read from across a room and type
+ * later. The href keeps the whole url, so the link still works if the screen is
+ * ever opened on a phone.
+ */
+function agendaLabel( url ) {
+	return String( url )
+		.replace( /^https?:\/\//, '' )
+		.replace( /\/$/, '' );
+}
+
 export default function SingleEventSlide( { slide, isActive } ) {
-	const { getEnabledEvents } = useContext( SlidesContext );
+	const { getEnabledEvents, agendaUrl } = useContext( SlidesContext );
 
 	const house = __( 'Muziekcentrum Soli', 'soli-tv' );
 	const { lead, accent } = useMemo(
@@ -158,6 +171,16 @@ export default function SingleEventSlide( { slide, isActive } ) {
 						</li>
 					) ) }
 				</ul>
+
+				{ agendaUrl && (
+					<a className="soli-tv-agenda__link" href={ agendaUrl }>
+						{ sprintf(
+							/* translators: %s: the agenda address, without scheme, e.g. soli.nl/agenda */
+							__( 'meer weten: %s', 'soli-tv' ),
+							agendaLabel( agendaUrl )
+						) }
+					</a>
+				) }
 			</aside>
 		</div>
 	);

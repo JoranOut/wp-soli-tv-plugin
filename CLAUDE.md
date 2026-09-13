@@ -278,6 +278,23 @@ Two CSS traps, both measured while building this:
 The screen formats dates in Dutch and does not follow the viewer's locale: it
 hangs in Driehuis and has one audience. The admin screens are the opposite case.
 
+### The panel points at the full agenda
+
+Under the list sits one link, reading `meer weten: soli.nl/agenda`. The url comes
+from the payload as `agendaUrl`, which is `home_url( '/agenda/' )` filtered
+through `soli_tv_agenda_url` - `/agenda/` being the path every event plugin block
+defaults to. It follows the site it runs on, so a staging screen names staging;
+filter it to send every screen to the public site.
+
+The label drops the scheme and the trailing slash, because a person reads it from
+across a hall. The href keeps the whole url, so the link works if `/tv/` is ever
+opened on a phone.
+
+The link is `flex-shrink: 0` and the list above it is `min-height: 0; overflow:
+hidden`. That pairing is what keeps the link on the panel when several titles
+wrap: without it the list grows and pushes the link off the bottom. Stress it
+with titles long enough to wrap every row before trusting a change here.
+
 ### The scrim is tuned against a white photo
 
 `--soli-tv-scrim` is the one gradient the plugin applies: `--soli-tv-ink` at
