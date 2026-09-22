@@ -129,17 +129,54 @@ jobs:
           npm run build
           node ./publish.js
 
-      - name: Delete previous nightly release
+      - name: Prune old nightly releases
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEEP: 14
+        run: |
+          # Keep the newest $KEEP nightlies so a site can roll back to a recent
+          # build and the updater can show them in its changelog. Sort by the
+          # commit-count suffix, not by creation date: a re-run of an old build
+          # must not survive a newer one. The new nightly is not created yet,
+          # so keep KEEP-1 to leave room for it. The first retained
+          # nightly after this change was verified by hand on 2026-09-20.
+          gh release list --limit 200 --json tagName \
+            --jq '.[] | select(.tagName | contains("nightly")) | .tagName' \
+            | awk -F'nightly.' '{ print $2 "\t" $0 }' | sort -rn | cut -f2 \
+            | tail -n +"$KEEP" | while read -r tag; do
+              echo "Deleting nightly: $tag"
+              gh release delete "$tag" --yes --cleanup-tag || true
+            done
+
+      - name: Generate nightly notes
         if: steps.guard.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get all releases with 'nightly' in the tag
-          NIGHTLY_RELEASES=$(gh release list --json tagName --jq '.[] | select(.tagName | contains("nightly")) | .tagName')
-          for tag in $NIGHTLY_RELEASES; do
-            echo "Deleting release: $tag"
-            gh release delete "$tag" --yes --cleanup-tag || true
-          done
+          # List the commits since the previous surviving nightly, so every
+          # nightly page says what changed. Keep the body to the commits: the
+          # updater renders these notes in the plugin details modal, one
+          # release after another, where repeated metadata buries them. The
+          # build details go below a horizontal rule, which the updater cuts. The version stamp is uncommitted,
+          # so HEAD is the built commit.
+          PREV_TAG=$(git tag -l 'v*-nightly.*' --sort=-v:refname | head -1)
+          if [ -n "$PREV_TAG" ] && git merge-base --is-ancestor "$PREV_TAG" HEAD 2>/dev/null; then
+            COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s" --no-merges)
+            COMPARE="**Full Changelog:** https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${{ steps.version.outputs.nightly_version }}"
+          else
+            COMMITS=$(git log -20 --pretty=format:"- %s" --no-merges)
+            COMPARE=""
+          fi
+          {
+            echo "${COMMITS:-- No commit summary available}"
+            echo
+            echo "---"
+            echo
+            echo "Pre-release build ${{ steps.version.outputs.nightly_version }}, ${{ steps.version.outputs.build }} commits on main, built from ${{ github.sha }} on ${{ steps.version.outputs.date }}."
+            [ -n "$COMPARE" ] && echo && echo "$COMPARE"
+          } > nightly_notes.md
+          cat nightly_notes.md
 
       - name: Create nightly release
         if: steps.guard.outputs.skip != 'true'
@@ -148,15 +185,6 @@ jobs:
         run: |
           gh release create "v${{ steps.version.outputs.nightly_version }}" \
             --title "Nightly Build ${{ steps.version.outputs.nightly_version }}" \
-            --notes "Automated nightly build from main branch.
-
-          **Version:** ${{ steps.version.outputs.nightly_version }}
-          **Build:** ${{ steps.version.outputs.build }} commits on main
-          **Built from:** ${{ github.sha }} on ${{ steps.version.outputs.date }}
-
-          The build number is the commit count, so this version only changes
-          when commits land - an idle repo will not prompt sites to update.
-
-          This is a pre-release build for testing purposes." \
+            --notes-file nightly_notes.md \
             --prerelease \
             *.zip
