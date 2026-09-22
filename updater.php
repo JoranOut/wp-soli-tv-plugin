@@ -37,7 +37,7 @@ class WP_GitHub_Updater {
 	/**
 	 * GitHub Updater version
 	 */
-	const VERSION = 1.7;
+	const VERSION = 1.9;
 
 	/**
 	 * @var $config the config for the updater
@@ -107,8 +107,14 @@ class WP_GitHub_Updater {
 
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'api_check' ) );
 
-		// Hook into the plugin details screen
-		add_filter( 'plugins_api', array( $this, 'get_plugin_info' ), 10, 3 );
+		// Hook into the plugin details screen. Run late: every sibling Soli
+		// plugin still on updater 1.7 hooks this filter at 10 and returns a
+		// literal false for any slug but its own, discarding whatever an
+		// earlier filter built. WordPress then asks wordpress.org, which
+		// answers "Plugin not found" and wp_die()s with a 500. At this
+		// priority the legacy filters have all run before ours.
+		add_filter( 'plugins_api', array( $this, 'get_plugin_info' ), 1000, 3 );
+		add_action( 'in_plugin_update_message-' . $this->config['slug'], array( $this, 'update_message' ), 10, 2 );
 		add_filter( 'upgrader_post_install', array( $this, 'upgrader_post_install' ), 10, 3 );
 
 		// set timeout
@@ -182,8 +188,10 @@ class WP_GitHub_Updater {
 		if ( ! isset( $this->config['author'] ) )
 			$this->config['author'] = $plugin_data['Author'];
 
+		// The details modal's "Plugin Homepage" link is the one place a user
+		// can reach GitHub from, so send them to the release list.
 		if ( ! isset( $this->config['homepage'] ) )
-			$this->config['homepage'] = $plugin_data['PluginURI'];
+			$this->config['homepage'] = $this->get_releases_url();
 
 		if ( ! isset( $this->config['readme'] ) )
 			$this->config['readme'] = 'README.md';
@@ -268,13 +276,10 @@ class WP_GitHub_Updater {
 	/**
 	 * Whether a version string belongs to the nightly channel
 	 *
-	 * Nightly builds are versioned `{stable}-nightly.{commits}` by
-	 * .github/workflows/nightly.yml - the build number is the commit count on
-	 * main, which only moves when commits land - and it stamps that version
-	 * into the plugin header of the zip it ships. A site is therefore on the
-	 * nightly channel exactly when its installed version carries that suffix.
-	 * The match below is on the `-nightly.` suffix alone, so it does not depend
-	 * on how the build number is formed.
+	 * Nightly builds are versioned `{stable}-nightly.{YYYYMMDD}` by
+	 * .github/workflows/nightly.yml, which stamps that version into the
+	 * plugin header of the zip it ships. A site is therefore on the nightly
+	 * channel exactly when its installed version carries that suffix.
 	 *
 	 * @since 1.7
 	 * @param string $version the version to classify
@@ -303,7 +308,10 @@ class WP_GitHub_Updater {
 			return $cached;
 		}
 
-		$response = $this->remote_get( trailingslashit( $this->config['api_url'] ) . 'releases' );
+		// GitHub pages at 30 by default. Nightlies are retained now, so a
+		// first page could hold nothing but nightlies and hide every stable
+		// release from a stable install.
+		$response = $this->remote_get( add_query_arg( 'per_page', 100, trailingslashit( $this->config['api_url'] ) . 'releases' ) );
 
 		// An API failure - a rate limit above all, since the unauthenticated
 		// limit is 60/hour and WP_GITHUB_FORCE_UPDATE re-checks on every admin
@@ -389,6 +397,279 @@ class WP_GitHub_Updater {
 		$this->channel_release = $best;
 
 		return $best;
+	}
+
+
+	/**
+	 * URL of the repository's release list on GitHub
+	 *
+	 * @since 1.8
+	 * @return string
+	 */
+	public function get_releases_url() {
+		return trailingslashit( $this->config['github_url'] ) . 'releases';
+	}
+
+
+	/**
+	 * URL of one release's page on GitHub
+	 *
+	 * @since 1.8
+	 * @param string $tag the release tag, e.g. `v2.0.3`
+	 * @return string
+	 */
+	public function get_release_url( $tag ) {
+		return $this->get_releases_url() . '/tag/' . rawurlencode( $tag );
+	}
+
+
+	/**
+	 * Releases in the installed version's channel, newest version first
+	 *
+	 * Drafts are dropped. Releases without a zip asset are kept here, unlike
+	 * in get_channel_release(): they are not installable, but they did happen
+	 * and belong in a changelog.
+	 *
+	 * @since 1.8
+	 * @return array of release objects as returned by the GitHub API
+	 */
+	public function get_channel_releases() {
+		$releases = $this->get_releases();
+
+		if ( empty( $releases ) )
+			return array();
+
+		$want_nightly = $this->is_nightly_version( $this->config['version'] );
+		$channel = array();
+
+		foreach ( $releases as $release ) {
+			if ( ! empty( $release->draft ) || empty( $release->tag_name ) )
+				continue;
+
+			if ( $this->is_nightly_version( $release->tag_name ) !== $want_nightly )
+				continue;
+
+			$channel[] = $release;
+		}
+
+		usort( $channel, function ( $a, $b ) {
+			return version_compare( ltrim( $b->tag_name, 'vV' ), ltrim( $a->tag_name, 'vV' ) );
+		} );
+
+		return $channel;
+	}
+
+
+	/**
+	 * Convert a GitHub release body (Markdown) to safe HTML
+	 *
+	 * Only the shapes the release and nightly workflows produce are handled:
+	 * headings, bullet lists, bold, bare URLs, and paragraphs. Anything else
+	 * comes through as escaped text, which is still readable.
+	 *
+	 * @since 1.8
+	 * @param string $markdown
+	 * @return string HTML
+	 */
+	public function markdown_to_html( $markdown ) {
+		$html = '';
+		$in_list = false;
+		$lines = preg_split( '/\r\n|\r|\n/', (string) $markdown );
+
+		foreach ( $lines as $line ) {
+			$trimmed = trim( $line );
+
+			if ( preg_match( '/^[-*]\s+(.*)$/', $trimmed, $m ) ) {
+				if ( ! $in_list ) {
+					$html .= '<ul>';
+					$in_list = true;
+				}
+				$html .= '<li>' . $this->inline_markdown( $m[1] ) . '</li>';
+				continue;
+			}
+
+			if ( $in_list ) {
+				$html .= '</ul>';
+				$in_list = false;
+			}
+
+			if ( '' === $trimmed || '---' === $trimmed )
+				continue;
+
+			if ( preg_match( '/^(#{1,6})\s+(.*)$/', $trimmed, $m ) ) {
+				// Release bodies start at h2; push everything one level down
+				// so nothing outranks the section heading in the modal.
+				$level = min( 6, strlen( $m[1] ) + 2 );
+				$html .= "<h{$level}>" . $this->inline_markdown( $m[2] ) . "</h{$level}>";
+				continue;
+			}
+
+			$html .= '<p>' . $this->inline_markdown( $trimmed ) . '</p>';
+		}
+
+		if ( $in_list )
+			$html .= '</ul>';
+
+		return $html;
+	}
+
+
+	/**
+	 * Escape a line of Markdown and render bold, inline code and links
+	 *
+	 * @since 1.8
+	 * @param string $text
+	 * @return string HTML
+	 */
+	private function inline_markdown( $text ) {
+		$text = esc_html( $text );
+		$text = preg_replace( '/\*\*(.+?)\*\*/', '<strong>$1</strong>', $text );
+		$text = preg_replace( '/`([^`]+)`/', '<code>$1</code>', $text );
+		// Markdown links first, then bare URLs that are not already inside a tag.
+		$text = preg_replace( '/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/', '<a href="$2">$1</a>', $text );
+		$text = preg_replace( '/(?<!["\'>])(https?:\/\/[^\s<]+)/', '<a href="$1">$1</a>', $text );
+		return $text;
+	}
+
+
+	/**
+	 * Build the changelog tab for the plugin details modal
+	 *
+	 * Lists every release in the installed channel, each linked to its page
+	 * on GitHub, with the release notes the workflow generated from commits.
+	 * The installed version is marked so the reader can see how far behind
+	 * the site is.
+	 *
+	 * @since 1.8
+	 * @return string HTML
+	 */
+	public function get_changelog_html() {
+		$releases = $this->get_channel_releases();
+		$nightly = $this->is_nightly_version( $this->config['version'] );
+
+		// No stylesheet: core runs these sections through wp_kses with a tag
+		// list that has no `style` element and no `style` attribute, so a rule
+		// set would be stripped and its text printed into the page. Readability
+		// here comes from the markup alone - a heading per release, the commit
+		// list under it, and nothing else.
+		$html = '<div class="soli-changelog">';
+		$html .= '<p>'
+			. ( $nightly
+				? esc_html__( 'Nightly builds, newest first.', 'github_plugin_updater' )
+				: esc_html__( 'Releases, newest first.', 'github_plugin_updater' ) )
+			. ' <a href="' . esc_url( $this->get_releases_url() ) . '" target="_blank" rel="noopener">'
+			. esc_html__( 'View all on GitHub', 'github_plugin_updater' ) . '</a></p>';
+
+		if ( empty( $releases ) )
+			return $html . '<p>' . esc_html__( 'No releases found in this channel.', 'github_plugin_updater' ) . '</p></div>';
+
+		foreach ( $releases as $release ) {
+			$version = ltrim( $release->tag_name, 'vV' );
+			$date = ! empty( $release->published_at ) ? date_i18n( get_option( 'date_format' ), strtotime( $release->published_at ) ) : '';
+			$installed = ( 0 === version_compare( $version, $this->config['version'] ) );
+
+			$html .= '<h4><a href="' . esc_url( $this->get_release_url( $release->tag_name ) ) . '" target="_blank" rel="noopener">'
+				. esc_html( $version ) . '</a>';
+			$note = esc_html( $date );
+
+			if ( $installed )
+				$note = ( '' === $note )
+					? esc_html__( 'installed', 'github_plugin_updater' )
+					: $note . ' &mdash; ' . esc_html__( 'installed', 'github_plugin_updater' );
+
+			if ( '' !== $note )
+				$html .= ' <em>' . $note . '</em>';
+
+			$html .= '</h4>';
+
+			$body = $this->strip_release_boilerplate( isset( $release->body ) ? $release->body : '' );
+
+			$html .= ( '' === $body )
+				? '<p class="soli-changelog-meta">' . esc_html__( 'No notes.', 'github_plugin_updater' ) . '</p>'
+				: wp_kses_post( $this->markdown_to_html( $body ) );
+		}
+
+		return $html . '</div>';
+	}
+
+
+	/**
+	 * Drop the repeated scaffolding from a release body
+	 *
+	 * The release and nightly workflows wrap the commit list in metadata that
+	 * is already on screen - version, build number, source commit, a fixed
+	 * disclaimer, a "Changes" heading above the only content there is, and a
+	 * compare URL the version heading already links to. Repeated once per
+	 * release it buries the three lines that actually differ, so it is
+	 * dropped here rather than in the workflows alone: releases published
+	 * before this change are retained for weeks and carry the old body.
+	 *
+	 * Everything after a horizontal rule goes too, which is where both
+	 * workflows put their trailing metadata.
+	 *
+	 * @since 1.9
+	 * @param string $markdown the release body
+	 * @return string the remaining Markdown, trimmed
+	 */
+	public function strip_release_boilerplate( $markdown ) {
+		$markdown = (string) $markdown;
+
+		// Everything below the first horizontal rule is trailing metadata.
+		$parts = preg_split( '/^\s*-{3,}\s*$/m', $markdown, 2 );
+		$markdown = $parts[0];
+
+		$drop = array(
+			'/^automated nightly build from main branch\.?$/i',
+			'/^this is a pre-release build for testing purposes\.?$/i',
+			'/^\*\*(version|build|built from|full changelog):\*\*/i',
+			'/^(version|build|built from|full changelog):/i',
+			'/^#{1,6}\s*changes\s*$/i',
+			'/^the build number is the commit count/i',
+			'/^when commits land/i',
+		);
+
+		$kept = array();
+
+		foreach ( preg_split( '/\r\n|\r|\n/', $markdown ) as $line ) {
+			$trimmed = trim( $line );
+			$skip = false;
+
+			foreach ( $drop as $pattern ) {
+				if ( preg_match( $pattern, $trimmed ) ) {
+					$skip = true;
+					break;
+				}
+			}
+
+			if ( ! $skip )
+				$kept[] = $line;
+		}
+
+		return trim( implode( "\n", $kept ) );
+	}
+
+
+	/**
+	 * Append GitHub links to the update notice in the plugins list
+	 *
+	 * WordPress hard-codes "View version details" to its own modal, so this
+	 * is the only way to put a direct link to the release on the row itself.
+	 *
+	 * @since 1.8
+	 * @param array  $plugin_data
+	 * @param object $response the update object from the transient
+	 * @return void
+	 */
+	public function update_message( $plugin_data, $response ) {
+		$new_version = ! empty( $response->new_version ) ? $response->new_version : '';
+
+		echo ' &middot; ';
+		if ( '' !== $new_version ) {
+			echo '<a href="' . esc_url( $this->get_release_url( 'v' . $new_version ) ) . '" target="_blank" rel="noopener">'
+				. esc_html__( 'Release notes on GitHub', 'github_plugin_updater' ) . '</a> &middot; ';
+		}
+		echo '<a href="' . esc_url( $this->get_releases_url() ) . '" target="_blank" rel="noopener">'
+			. esc_html__( 'All releases', 'github_plugin_updater' ) . '</a>';
 	}
 
 
@@ -542,15 +823,27 @@ class WP_GitHub_Updater {
 	 */
 	public function get_plugin_info( $false, $action, $response ) {
 
-		// Check if this call API is for the right plugin
-		if ( !isset( $response->slug ) || $response->slug != $this->config['slug'] )
-			return false;
+		// Check if this call API is for the right plugin. WordPress builds the
+		// "View version details" link from the update transient's slug, which
+		// api_check() sets to the folder name, so accept that as well as the
+		// plugin_basename form. Only the folder name ever arrives from core.
+		if ( ! isset( $response->slug ) )
+			return $false;
+
+		if ( $response->slug !== $this->config['slug'] && $response->slug !== $this->config['proper_folder_name'] )
+			return $false;
 
 		// Only reached on this plugin's details screen, so the lookup is worth
 		// making here; every other plugins_api call costs nothing.
 		$this->resolve_remote();
 
-		$response->slug = $this->config['slug'];
+		// The folder name is what core compares against installed plugins
+		// (install_plugin_install_status), so the modal offers "Update Now".
+		$response->slug = $this->config['proper_folder_name'];
+		// Core's details screen reads ->name (a notice without it) and uses
+		// it to recognise the installed copy, which turns "Install Now" into
+		// "Update Now". plugin_name is kept for anything already reading it.
+		$response->name = $this->config['plugin_name'];
 		$response->plugin_name  = $this->config['plugin_name'];
 		$response->version = $this->config['new_version'];
 		$response->author = $this->config['author'];
@@ -559,7 +852,10 @@ class WP_GitHub_Updater {
 		$response->tested = $this->config['tested'];
 		$response->downloaded   = 0;
 		$response->last_updated = $this->config['last_updated'];
-		$response->sections = array( 'description' => $this->config['description'] );
+		$response->sections = array(
+			'description' => $this->config['description'],
+			'changelog'   => $this->get_changelog_html(),
+		);
 		$response->download_link = $this->config['zip_url'];
 
 		return $response;
