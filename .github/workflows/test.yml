@@ -88,7 +88,7 @@ jobs:
           # two numbers, so if wp-env quietly installed something else the plugin
           # would advertise compatibility it never demonstrated.
           # Note the run container is tests-cli, not tests.
-          RAW=$(npx wp-env run tests-cli wp core version 2>&1 | tr -d '\r')
+          RAW=$(npx @wordpress/env run tests-cli wp core version 2>&1 | tr -d '\r')
           ACTUAL=$(printf '%s\n' "$RAW" | grep -oE '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | head -1 || true)
           WANTED="${{ steps.wp.outputs.version }}"
 
