@@ -33,6 +33,6 @@
     "@playwright/test": "^1.49.0",
     "@wordpress/env": "^12.1.0",
     "@wordpress/scripts": "^31.0.0",
-    "archiver": "^7.0.1"
+    "archiver": "^8.0.0"
   }
 }
