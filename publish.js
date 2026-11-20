@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const archiver = require('archiver');
+const { ZipArchive } = require('archiver');
 
 // Step 1: Delete any existing .zip files in the main directory
 const files = fs.readdirSync(__dirname);
@@ -39,7 +39,7 @@ const zipFileName = `${pluginName}.zip`;
 const outputFilePath = path.join(__dirname, zipFileName);
 
 const output = fs.createWriteStream(outputFilePath);
-const archive = archiver('zip', { zlib: { level: 9 } });
+const archive = new ZipArchive({ zlib: { level: 9 } });
 
 // Log result
 output.on('close', () => {
