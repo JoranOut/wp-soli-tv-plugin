@@ -20,6 +20,7 @@ playwright.config.js
 
 # Build scripts
 publish.js
+bin/**
 
 # Tests
 e2e/**
