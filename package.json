@@ -14,9 +14,9 @@
     "test:e2e": "wp-scripts test-playwright",
     "test:e2e:watch": "wp-scripts test-playwright --watch",
     "test:e2e:debug": "wp-scripts test-playwright --debug",
-    "env:start": "wp-env start",
+    "env:start": "node bin/wp-env-start.js",
     "env:stop": "wp-env stop",
-    "env:reset": "wp-env clean all && wp-env start",
+    "env:reset": "wp-env clean all && node bin/wp-env-start.js",
     "publish": "npm run build && node ./publish.js"
   },
   "engines": {
